@@ -37,6 +37,7 @@
             this.rbNumerator = new System.Windows.Forms.RadioButton();
             this.rbDenominator = new System.Windows.Forms.RadioButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnAdmin = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -48,7 +49,6 @@
             this.cmbDirection.Size = new System.Drawing.Size(121, 24);
             this.cmbDirection.TabIndex = 0;
             this.cmbDirection.Text = "Направление";
-            
             // 
             // cmbGroup
             // 
@@ -76,7 +76,6 @@
             this.listSchedule.Name = "listSchedule";
             this.listSchedule.Size = new System.Drawing.Size(776, 340);
             this.listSchedule.TabIndex = 3;
-            
             // 
             // lblTitle
             // 
@@ -87,7 +86,6 @@
             this.lblTitle.Size = new System.Drawing.Size(219, 25);
             this.lblTitle.TabIndex = 4;
             this.lblTitle.Text = "Расписание занятий";
-           
             // 
             // cmbDay
             // 
@@ -97,7 +95,6 @@
             this.cmbDay.Size = new System.Drawing.Size(121, 24);
             this.cmbDay.TabIndex = 5;
             this.cmbDay.Text = "День недели";
-           
             // 
             // rbNumerator
             // 
@@ -132,11 +129,22 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Тип недели";
             // 
+            // btnAdmin
+            // 
+            this.btnAdmin.Location = new System.Drawing.Point(618, 392);
+            this.btnAdmin.Name = "btnAdmin";
+            this.btnAdmin.Size = new System.Drawing.Size(167, 46);
+            this.btnAdmin.TabIndex = 9;
+            this.btnAdmin.Text = "Администрирование";
+            this.btnAdmin.UseVisualStyleBackColor = true;
+            this.btnAdmin.Click += new System.EventHandler(this.btnAdmin_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnAdmin);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.cmbDay);
             this.Controls.Add(this.lblTitle);
@@ -163,6 +171,7 @@
         private System.Windows.Forms.RadioButton rbNumerator;
         private System.Windows.Forms.RadioButton rbDenominator;
         private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Button btnAdmin;
     }
 }
 

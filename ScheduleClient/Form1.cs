@@ -134,6 +134,46 @@ namespace ScheduleClient
             if (date < start) start = start.AddYears(-1);
             return (int)((date - start).TotalDays / 7) + 1;
         }
+
+        private void btnAdmin_Click(object sender, EventArgs e)
+        {
+            string password = "12345"; // ← твой пароль
+
+            using (var form = new Form())
+            {
+                form.Text = "Требуется пароль";
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+                form.Size = new System.Drawing.Size(300, 150);
+
+                var label = new Label() { Left = 20, Top = 20, Width = 250, Text = "Введите пароль:" };
+                var textBox = new TextBox() { Left = 20, Top = 50, Width = 240 };
+                textBox.UseSystemPasswordChar = true; // скрывает символы
+                var buttonOk = new Button() { Text = "ОК", Left = 170, Width = 80, Top = 85, DialogResult = DialogResult.OK };
+
+                buttonOk.Click += (s, ev) => form.Close();
+
+                form.Controls.Add(label);
+                form.Controls.Add(textBox);
+                form.Controls.Add(buttonOk);
+                form.AcceptButton = buttonOk;
+
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    if (textBox.Text == password)
+                    {
+                        new AdminForm().ShowDialog();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Неверный пароль!", "Доступ запрещён",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+            }
+        }
     }
 
    

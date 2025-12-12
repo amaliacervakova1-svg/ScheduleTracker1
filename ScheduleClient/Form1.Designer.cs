@@ -38,7 +38,6 @@
             this.rbDenominator = new System.Windows.Forms.RadioButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnAdmin = new System.Windows.Forms.Button();
-            this.btnRefresh = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -138,22 +137,13 @@
             this.btnAdmin.TabIndex = 9;
             this.btnAdmin.Text = "Администрирование";
             this.btnAdmin.UseVisualStyleBackColor = true;
-            // 
-            // btnRefresh
-            // 
-            this.btnRefresh.Location = new System.Drawing.Point(450, 392);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(150, 46);
-            this.btnRefresh.TabIndex = 10;
-            this.btnRefresh.Text = "Обновить данные";
-            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnAdmin.Click += new System.EventHandler(this.btnAdmin_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.btnRefresh);
             this.Controls.Add(this.btnAdmin);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.cmbDay);
@@ -182,6 +172,6 @@
         private System.Windows.Forms.RadioButton rbDenominator;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnAdmin;
-        private System.Windows.Forms.Button btnRefresh;
     }
 }
+

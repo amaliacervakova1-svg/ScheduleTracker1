@@ -85,7 +85,7 @@
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1056, 600);
+            this.tabControl1.Size = new System.Drawing.Size(1288, 653);
             this.tabControl1.TabIndex = 0;
             // 
             // tabGroups
@@ -119,7 +119,7 @@
             // 
             // btnRefreshGroups
             // 
-            this.btnRefreshGroups.Location = new System.Drawing.Point(32, 350);
+            this.btnRefreshGroups.Location = new System.Drawing.Point(32, 357);
             this.btnRefreshGroups.Name = "btnRefreshGroups";
             this.btnRefreshGroups.Size = new System.Drawing.Size(135, 30);
             this.btnRefreshGroups.TabIndex = 9;
@@ -129,7 +129,7 @@
             // btnDeleteGroup
             // 
             this.btnDeleteGroup.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.btnDeleteGroup.Location = new System.Drawing.Point(32, 280);
+            this.btnDeleteGroup.Location = new System.Drawing.Point(32, 283);
             this.btnDeleteGroup.Name = "btnDeleteGroup";
             this.btnDeleteGroup.Size = new System.Drawing.Size(135, 50);
             this.btnDeleteGroup.TabIndex = 8;
@@ -139,7 +139,7 @@
             // btnCreateGroupFromParts
             // 
             this.btnCreateGroupFromParts.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.btnCreateGroupFromParts.Location = new System.Drawing.Point(32, 220);
+            this.btnCreateGroupFromParts.Location = new System.Drawing.Point(32, 224);
             this.btnCreateGroupFromParts.Name = "btnCreateGroupFromParts";
             this.btnCreateGroupFromParts.Size = new System.Drawing.Size(135, 40);
             this.btnCreateGroupFromParts.TabIndex = 7;
@@ -148,9 +148,9 @@
             // 
             // txtGroupNum
             // 
-            this.txtGroupNum.Location = new System.Drawing.Point(32, 170);
+            this.txtGroupNum.Location = new System.Drawing.Point(32, 179);
             this.txtGroupNum.Name = "txtGroupNum";
-            this.txtGroupNum.Size = new System.Drawing.Size(100, 22);
+            this.txtGroupNum.Size = new System.Drawing.Size(135, 22);
             this.txtGroupNum.TabIndex = 6;
             // 
             // lblGroupNum
@@ -166,7 +166,7 @@
             // 
             this.txtDirection.Location = new System.Drawing.Point(32, 120);
             this.txtDirection.Name = "txtDirection";
-            this.txtDirection.Size = new System.Drawing.Size(100, 22);
+            this.txtDirection.Size = new System.Drawing.Size(135, 22);
             this.txtDirection.TabIndex = 4;
             // 
             // lblDirection
@@ -210,7 +210,7 @@
             this.tabLessons.Location = new System.Drawing.Point(4, 25);
             this.tabLessons.Name = "tabLessons";
             this.tabLessons.Padding = new System.Windows.Forms.Padding(3);
-            this.tabLessons.Size = new System.Drawing.Size(1048, 571);
+            this.tabLessons.Size = new System.Drawing.Size(1280, 624);
             this.tabLessons.TabIndex = 1;
             this.tabLessons.Text = "Расписание";
             this.tabLessons.UseVisualStyleBackColor = true;
@@ -219,7 +219,7 @@
             // 
             this.lblStats.AutoSize = true;
             this.lblStats.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblStats.Location = new System.Drawing.Point(212, 22);
+            this.lblStats.Location = new System.Drawing.Point(212, 591);
             this.lblStats.Name = "lblStats";
             this.lblStats.Size = new System.Drawing.Size(124, 18);
             this.lblStats.TabIndex = 20;
@@ -227,7 +227,7 @@
             // 
             // btnRefreshLessons
             // 
-            this.btnRefreshLessons.Location = new System.Drawing.Point(22, 410);
+            this.btnRefreshLessons.Location = new System.Drawing.Point(39, 506);
             this.btnRefreshLessons.Name = "btnRefreshLessons";
             this.btnRefreshLessons.Size = new System.Drawing.Size(110, 30);
             this.btnRefreshLessons.TabIndex = 19;
@@ -237,7 +237,7 @@
             // btnDeleteAllLessonsForGroup
             // 
             this.btnDeleteAllLessonsForGroup.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.btnDeleteAllLessonsForGroup.Location = new System.Drawing.Point(22, 350);
+            this.btnDeleteAllLessonsForGroup.Location = new System.Drawing.Point(39, 427);
             this.btnDeleteAllLessonsForGroup.Name = "btnDeleteAllLessonsForGroup";
             this.btnDeleteAllLessonsForGroup.Size = new System.Drawing.Size(110, 50);
             this.btnDeleteAllLessonsForGroup.TabIndex = 18;
@@ -246,7 +246,7 @@
             // 
             // btnDeleteLesson
             // 
-            this.btnDeleteLesson.Location = new System.Drawing.Point(22, 300);
+            this.btnDeleteLesson.Location = new System.Drawing.Point(39, 363);
             this.btnDeleteLesson.Name = "btnDeleteLesson";
             this.btnDeleteLesson.Size = new System.Drawing.Size(110, 40);
             this.btnDeleteLesson.TabIndex = 17;
@@ -274,13 +274,13 @@
             this.dgvLessons.ReadOnly = true;
             this.dgvLessons.RowHeadersWidth = 51;
             this.dgvLessons.RowTemplate.Height = 24;
-            this.dgvLessons.Size = new System.Drawing.Size(850, 500);
+            this.dgvLessons.Size = new System.Drawing.Size(1059, 500);
             this.dgvLessons.TabIndex = 16;
             // 
             // btnAddLesson
             // 
             this.btnAddLesson.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.btnAddLesson.Location = new System.Drawing.Point(22, 220);
+            this.btnAddLesson.Location = new System.Drawing.Point(39, 275);
             this.btnAddLesson.Name = "btnAddLesson";
             this.btnAddLesson.Size = new System.Drawing.Size(110, 60);
             this.btnAddLesson.TabIndex = 15;
@@ -289,37 +289,37 @@
             // 
             // txtRoom
             // 
-            this.txtRoom.Location = new System.Drawing.Point(22, 190);
+            this.txtRoom.Location = new System.Drawing.Point(22, 238);
             this.txtRoom.Name = "txtRoom";
-            this.txtRoom.Size = new System.Drawing.Size(110, 22);
+            this.txtRoom.Size = new System.Drawing.Size(150, 22);
             this.txtRoom.TabIndex = 14;
             // 
             // txtTeacher
             // 
-            this.txtTeacher.Location = new System.Drawing.Point(22, 160);
+            this.txtTeacher.Location = new System.Drawing.Point(22, 210);
             this.txtTeacher.Name = "txtTeacher";
-            this.txtTeacher.Size = new System.Drawing.Size(110, 22);
+            this.txtTeacher.Size = new System.Drawing.Size(150, 22);
             this.txtTeacher.TabIndex = 13;
             // 
             // txtSubject
             // 
-            this.txtSubject.Location = new System.Drawing.Point(22, 130);
+            this.txtSubject.Location = new System.Drawing.Point(22, 182);
             this.txtSubject.Name = "txtSubject";
-            this.txtSubject.Size = new System.Drawing.Size(110, 22);
+            this.txtSubject.Size = new System.Drawing.Size(150, 22);
             this.txtSubject.TabIndex = 12;
             // 
             // cmbTime
             // 
             this.cmbTime.FormattingEnabled = true;
-            this.cmbTime.Location = new System.Drawing.Point(22, 100);
+            this.cmbTime.Location = new System.Drawing.Point(22, 152);
             this.cmbTime.Name = "cmbTime";
-            this.cmbTime.Size = new System.Drawing.Size(110, 24);
+            this.cmbTime.Size = new System.Drawing.Size(150, 24);
             this.cmbTime.TabIndex = 11;
             // 
             // rbAdminDen
             // 
             this.rbAdminDen.AutoSize = true;
-            this.rbAdminDen.Location = new System.Drawing.Point(92, 70);
+            this.rbAdminDen.Location = new System.Drawing.Point(22, 96);
             this.rbAdminDen.Name = "rbAdminDen";
             this.rbAdminDen.Size = new System.Drawing.Size(116, 20);
             this.rbAdminDen.TabIndex = 10;
@@ -342,7 +342,7 @@
             // 
             this.cmbAdminDay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbAdminDay.FormattingEnabled = true;
-            this.cmbAdminDay.Location = new System.Drawing.Point(575, 10);
+            this.cmbAdminDay.Location = new System.Drawing.Point(22, 122);
             this.cmbAdminDay.Name = "cmbAdminDay";
             this.cmbAdminDay.Size = new System.Drawing.Size(150, 24);
             this.cmbAdminDay.TabIndex = 8;
@@ -351,9 +351,9 @@
             // 
             this.cmbGroupForLesson.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbGroupForLesson.FormattingEnabled = true;
-            this.cmbGroupForLesson.Location = new System.Drawing.Point(100, 40);
+            this.cmbGroupForLesson.Location = new System.Drawing.Point(215, 40);
             this.cmbGroupForLesson.Name = "cmbGroupForLesson";
-            this.cmbGroupForLesson.Size = new System.Drawing.Size(150, 24);
+            this.cmbGroupForLesson.Size = new System.Drawing.Size(192, 24);
             this.cmbGroupForLesson.TabIndex = 7;
             // 
             // cmbDirectionForLesson
@@ -362,13 +362,13 @@
             this.cmbDirectionForLesson.FormattingEnabled = true;
             this.cmbDirectionForLesson.Location = new System.Drawing.Point(22, 40);
             this.cmbDirectionForLesson.Name = "cmbDirectionForLesson";
-            this.cmbDirectionForLesson.Size = new System.Drawing.Size(70, 24);
+            this.cmbDirectionForLesson.Size = new System.Drawing.Size(150, 24);
             this.cmbDirectionForLesson.TabIndex = 6;
             // 
             // lblSelectGroup
             // 
             this.lblSelectGroup.AutoSize = true;
-            this.lblSelectGroup.Location = new System.Drawing.Point(100, 20);
+            this.lblSelectGroup.Location = new System.Drawing.Point(212, 20);
             this.lblSelectGroup.Name = "lblSelectGroup";
             this.lblSelectGroup.Size = new System.Drawing.Size(54, 16);
             this.lblSelectGroup.TabIndex = 5;
@@ -388,9 +388,9 @@
             this.statusStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 624);
+            this.statusStrip.Location = new System.Drawing.Point(0, 668);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(1080, 26);
+            this.statusStrip.Size = new System.Drawing.Size(1326, 26);
             this.statusStrip.TabIndex = 1;
             this.statusStrip.Text = "statusStrip1";
             // 
@@ -472,7 +472,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1080, 650);
+            this.ClientSize = new System.Drawing.Size(1326, 694);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.tabControl1);
             this.MinimumSize = new System.Drawing.Size(1098, 697);

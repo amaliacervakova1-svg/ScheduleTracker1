@@ -752,20 +752,42 @@ namespace ScheduleClient
 
         private async void dgvLessons_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (e.RowIndex < 0) return;
 
-            if (dgvLessons.Columns[e.ColumnIndex].Name == "Delete")
+            // Проверяем, кликнули ли по последнему столбцу (где "Удалить" или кнопка)
+            if (e.ColumnIndex == dgvLessons.Columns.Count - 1) // последний столбец
             {
-                int id = Convert.ToInt32(dgvLessons.Rows[e.RowIndex].Cells["Id"].Value);
-                string groupName = dgvLessons.Rows[e.RowIndex].Cells["Group"].Value?.ToString() ?? "неизвестная";
-                string subject = dgvLessons.Rows[e.RowIndex].Cells["Subject"].Value?.ToString() ?? "неизвестный";
-
-                var result = MessageBox.Show($"Удалить занятие?\n\nГруппа: {groupName}\nПредмет: {subject}",
-                    "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                // Id урока — в предпоследнем столбце (индекс Columns.Count - 2)
+                object idObj = dgvLessons.Rows[e.RowIndex].Cells[dgvLessons.Columns.Count - 2].Value;
+                if (idObj == null || !int.TryParse(idObj.ToString(), out int lessonId))
                 {
-                    await DeleteLesson(id);
+                    MessageBox.Show("Не удалось получить ID пары");
+                    return;
+                }
+
+                string groupName = dgvLessons.Rows[e.RowIndex].Cells[0].Value?.ToString() ?? "неизвестно";
+                string subject = dgvLessons.Rows[e.RowIndex].Cells[4].Value?.ToString() ?? "неизвестно";
+
+                if (MessageBox.Show($"Удалить пару?\nГруппа: {groupName}\nПредмет: {subject}",
+                    "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    try
+                    {
+                        var response = await http.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
+                        if (response.IsSuccessStatusCode)
+                        {
+                            MessageBox.Show("Пара удалена!");
+                            await LoadData(); // обновляем таблицу
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ошибка удаления на сервере");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ошибка: " + ex.Message);
+                    }
                 }
             }
         }

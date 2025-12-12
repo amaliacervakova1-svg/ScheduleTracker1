@@ -897,5 +897,15 @@ namespace ScheduleClient
             Console.WriteLine("Нажата кнопка 'Обновить'");
             await LoadData();
         }
+
+        private void AdminForm_Load_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lstGroups_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

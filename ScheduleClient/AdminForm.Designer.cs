@@ -62,6 +62,14 @@
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
+            this.colGroup = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDay = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colWeek = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colSubject = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTeacher = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colRoom = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colAction = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabGroups.SuspendLayout();
             this.tabLessons.SuspendLayout();
@@ -105,7 +113,7 @@
             this.lblGroupsInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.lblGroupsInfo.Location = new System.Drawing.Point(212, 22);
             this.lblGroupsInfo.Name = "lblGroupsInfo";
-            this.lblGroupsInfo.Size = new System.Drawing.Size(221, 18);
+            this.lblGroupsInfo.Size = new System.Drawing.Size(210, 18);
             this.lblGroupsInfo.TabIndex = 10;
             this.lblGroupsInfo.Text = "Список всех групп в системе";
             // 
@@ -150,7 +158,7 @@
             this.lblGroupNum.AutoSize = true;
             this.lblGroupNum.Location = new System.Drawing.Point(32, 150);
             this.lblGroupNum.Name = "lblGroupNum";
-            this.lblGroupNum.Size = new System.Drawing.Size(98, 16);
+            this.lblGroupNum.Size = new System.Drawing.Size(100, 16);
             this.lblGroupNum.TabIndex = 5;
             this.lblGroupNum.Text = "Номер группы";
             // 
@@ -166,7 +174,7 @@
             this.lblDirection.AutoSize = true;
             this.lblDirection.Location = new System.Drawing.Point(32, 100);
             this.lblDirection.Name = "lblDirection";
-            this.lblDirection.Size = new System.Drawing.Size(75, 16);
+            this.lblDirection.Size = new System.Drawing.Size(97, 16);
             this.lblDirection.TabIndex = 3;
             this.lblDirection.Text = "Направление";
             // 
@@ -178,6 +186,7 @@
             this.lstGroups.Name = "lstGroups";
             this.lstGroups.Size = new System.Drawing.Size(800, 500);
             this.lstGroups.TabIndex = 0;
+            this.lstGroups.SelectedIndexChanged += new System.EventHandler(this.lstGroups_SelectedIndexChanged);
             // 
             // tabLessons
             // 
@@ -212,7 +221,7 @@
             this.lblStats.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.lblStats.Location = new System.Drawing.Point(212, 22);
             this.lblStats.Name = "lblStats";
-            this.lblStats.Size = new System.Drawing.Size(146, 18);
+            this.lblStats.Size = new System.Drawing.Size(124, 18);
             this.lblStats.TabIndex = 20;
             this.lblStats.Text = "Всего занятий: 0";
             // 
@@ -251,7 +260,16 @@
             dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
             this.dgvLessons.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             this.dgvLessons.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvLessons.Location = new System.Drawing.Point(175, 50);
+            this.dgvLessons.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colGroup,
+            this.colDay,
+            this.colWeek,
+            this.colTime,
+            this.colSubject,
+            this.colTeacher,
+            this.colRoom,
+            this.colAction});
+            this.dgvLessons.Location = new System.Drawing.Point(215, 71);
             this.dgvLessons.Name = "dgvLessons";
             this.dgvLessons.ReadOnly = true;
             this.dgvLessons.RowHeadersWidth = 51;
@@ -352,7 +370,7 @@
             this.lblSelectGroup.AutoSize = true;
             this.lblSelectGroup.Location = new System.Drawing.Point(100, 20);
             this.lblSelectGroup.Name = "lblSelectGroup";
-            this.lblSelectGroup.Size = new System.Drawing.Size(52, 16);
+            this.lblSelectGroup.Size = new System.Drawing.Size(54, 16);
             this.lblSelectGroup.TabIndex = 5;
             this.lblSelectGroup.Text = "Группа";
             // 
@@ -361,7 +379,7 @@
             this.lblDirectionForLesson.AutoSize = true;
             this.lblDirectionForLesson.Location = new System.Drawing.Point(22, 20);
             this.lblDirectionForLesson.Name = "lblDirectionForLesson";
-            this.lblDirectionForLesson.Size = new System.Drawing.Size(75, 16);
+            this.lblDirectionForLesson.Size = new System.Drawing.Size(97, 16);
             this.lblDirectionForLesson.TabIndex = 4;
             this.lblDirectionForLesson.Text = "Направление";
             // 
@@ -370,21 +388,85 @@
             this.statusStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 625);
+            this.statusStrip.Location = new System.Drawing.Point(0, 624);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(1080, 25);
+            this.statusStrip.Size = new System.Drawing.Size(1080, 26);
             this.statusStrip.TabIndex = 1;
             this.statusStrip.Text = "statusStrip1";
             // 
             // statusLabel
             // 
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(51, 20);
+            this.statusLabel.Size = new System.Drawing.Size(57, 20);
             this.statusLabel.Text = "Готово";
             // 
             // errorProvider
             // 
             this.errorProvider.ContainerControl = this;
+            // 
+            // colGroup
+            // 
+            this.colGroup.HeaderText = "Группа";
+            this.colGroup.MinimumWidth = 6;
+            this.colGroup.Name = "colGroup";
+            this.colGroup.ReadOnly = true;
+            this.colGroup.Width = 125;
+            // 
+            // colDay
+            // 
+            this.colDay.HeaderText = "День недели";
+            this.colDay.MinimumWidth = 6;
+            this.colDay.Name = "colDay";
+            this.colDay.ReadOnly = true;
+            this.colDay.Width = 125;
+            // 
+            // colWeek
+            // 
+            this.colWeek.HeaderText = "Неделя";
+            this.colWeek.MinimumWidth = 6;
+            this.colWeek.Name = "colWeek";
+            this.colWeek.ReadOnly = true;
+            this.colWeek.Width = 125;
+            // 
+            // colTime
+            // 
+            this.colTime.HeaderText = "Время";
+            this.colTime.MinimumWidth = 6;
+            this.colTime.Name = "colTime";
+            this.colTime.ReadOnly = true;
+            this.colTime.Width = 125;
+            // 
+            // colSubject
+            // 
+            this.colSubject.HeaderText = "Предмет";
+            this.colSubject.MinimumWidth = 6;
+            this.colSubject.Name = "colSubject";
+            this.colSubject.ReadOnly = true;
+            this.colSubject.Width = 125;
+            // 
+            // colTeacher
+            // 
+            this.colTeacher.HeaderText = "Преподаватель";
+            this.colTeacher.MinimumWidth = 6;
+            this.colTeacher.Name = "colTeacher";
+            this.colTeacher.ReadOnly = true;
+            this.colTeacher.Width = 125;
+            // 
+            // colRoom
+            // 
+            this.colRoom.HeaderText = "Аудитория";
+            this.colRoom.MinimumWidth = 6;
+            this.colRoom.Name = "colRoom";
+            this.colRoom.ReadOnly = true;
+            this.colRoom.Width = 125;
+            // 
+            // colAction
+            // 
+            this.colAction.HeaderText = "Действие";
+            this.colAction.MinimumWidth = 6;
+            this.colAction.Name = "colAction";
+            this.colAction.ReadOnly = true;
+            this.colAction.Width = 125;
             // 
             // AdminForm
             // 
@@ -397,6 +479,7 @@
             this.Name = "AdminForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Администрирование расписания";
+            this.Load += new System.EventHandler(this.AdminForm_Load_1);
             this.tabControl1.ResumeLayout(false);
             this.tabGroups.ResumeLayout(false);
             this.tabGroups.PerformLayout();
@@ -445,5 +528,13 @@
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
         private System.Windows.Forms.ErrorProvider errorProvider;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colGroup;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colDay;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colWeek;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTime;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colSubject;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTeacher;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colRoom;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colAction;
     }
 }

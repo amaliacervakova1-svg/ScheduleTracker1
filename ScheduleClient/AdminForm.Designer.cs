@@ -32,8 +32,6 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGroups = new System.Windows.Forms.TabPage();
-            this.lblGroupsInfo = new System.Windows.Forms.Label();
-            this.btnRefreshGroups = new System.Windows.Forms.Button();
             this.btnDeleteGroup = new System.Windows.Forms.Button();
             this.btnCreateGroupFromParts = new System.Windows.Forms.Button();
             this.txtGroupNum = new System.Windows.Forms.TextBox();
@@ -43,7 +41,6 @@
             this.lstGroups = new System.Windows.Forms.ListBox();
             this.tabLessons = new System.Windows.Forms.TabPage();
             this.lblStats = new System.Windows.Forms.Label();
-            this.btnRefreshLessons = new System.Windows.Forms.Button();
             this.btnDeleteAllLessonsForGroup = new System.Windows.Forms.Button();
             this.btnDeleteLesson = new System.Windows.Forms.Button();
             this.dgvLessons = new System.Windows.Forms.DataGridView();
@@ -69,7 +66,6 @@
             this.colSubject = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colTeacher = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colRoom = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colAction = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabControl1.SuspendLayout();
             this.tabGroups.SuspendLayout();
             this.tabLessons.SuspendLayout();
@@ -90,8 +86,6 @@
             // 
             // tabGroups
             // 
-            this.tabGroups.Controls.Add(this.lblGroupsInfo);
-            this.tabGroups.Controls.Add(this.btnRefreshGroups);
             this.tabGroups.Controls.Add(this.btnDeleteGroup);
             this.tabGroups.Controls.Add(this.btnCreateGroupFromParts);
             this.tabGroups.Controls.Add(this.txtGroupNum);
@@ -106,25 +100,6 @@
             this.tabGroups.TabIndex = 0;
             this.tabGroups.Text = "Группы";
             this.tabGroups.UseVisualStyleBackColor = true;
-            // 
-            // lblGroupsInfo
-            // 
-            this.lblGroupsInfo.AutoSize = true;
-            this.lblGroupsInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblGroupsInfo.Location = new System.Drawing.Point(212, 22);
-            this.lblGroupsInfo.Name = "lblGroupsInfo";
-            this.lblGroupsInfo.Size = new System.Drawing.Size(210, 18);
-            this.lblGroupsInfo.TabIndex = 10;
-            this.lblGroupsInfo.Text = "Список всех групп в системе";
-            // 
-            // btnRefreshGroups
-            // 
-            this.btnRefreshGroups.Location = new System.Drawing.Point(32, 357);
-            this.btnRefreshGroups.Name = "btnRefreshGroups";
-            this.btnRefreshGroups.Size = new System.Drawing.Size(135, 30);
-            this.btnRefreshGroups.TabIndex = 9;
-            this.btnRefreshGroups.Text = "Обновить список";
-            this.btnRefreshGroups.UseVisualStyleBackColor = true;
             // 
             // btnDeleteGroup
             // 
@@ -191,7 +166,6 @@
             // tabLessons
             // 
             this.tabLessons.Controls.Add(this.lblStats);
-            this.tabLessons.Controls.Add(this.btnRefreshLessons);
             this.tabLessons.Controls.Add(this.btnDeleteAllLessonsForGroup);
             this.tabLessons.Controls.Add(this.btnDeleteLesson);
             this.tabLessons.Controls.Add(this.dgvLessons);
@@ -224,15 +198,6 @@
             this.lblStats.Size = new System.Drawing.Size(124, 18);
             this.lblStats.TabIndex = 20;
             this.lblStats.Text = "Всего занятий: 0";
-            // 
-            // btnRefreshLessons
-            // 
-            this.btnRefreshLessons.Location = new System.Drawing.Point(39, 506);
-            this.btnRefreshLessons.Name = "btnRefreshLessons";
-            this.btnRefreshLessons.Size = new System.Drawing.Size(110, 30);
-            this.btnRefreshLessons.TabIndex = 19;
-            this.btnRefreshLessons.Text = "Обновить";
-            this.btnRefreshLessons.UseVisualStyleBackColor = true;
             // 
             // btnDeleteAllLessonsForGroup
             // 
@@ -267,8 +232,7 @@
             this.colTime,
             this.colSubject,
             this.colTeacher,
-            this.colRoom,
-            this.colAction});
+            this.colRoom});
             this.dgvLessons.Location = new System.Drawing.Point(215, 71);
             this.dgvLessons.Name = "dgvLessons";
             this.dgvLessons.ReadOnly = true;
@@ -460,14 +424,6 @@
             this.colRoom.ReadOnly = true;
             this.colRoom.Width = 125;
             // 
-            // colAction
-            // 
-            this.colAction.HeaderText = "Действие";
-            this.colAction.MinimumWidth = 6;
-            this.colAction.Name = "colAction";
-            this.colAction.ReadOnly = true;
-            this.colAction.Width = 125;
-            // 
             // AdminForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -499,8 +455,6 @@
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabGroups;
         private System.Windows.Forms.TabPage tabLessons;
-        private System.Windows.Forms.Label lblGroupsInfo;
-        private System.Windows.Forms.Button btnRefreshGroups;
         private System.Windows.Forms.Button btnDeleteGroup;
         private System.Windows.Forms.Button btnCreateGroupFromParts;
         private System.Windows.Forms.TextBox txtGroupNum;
@@ -509,7 +463,6 @@
         private System.Windows.Forms.Label lblDirection;
         private System.Windows.Forms.ListBox lstGroups;
         private System.Windows.Forms.Label lblStats;
-        private System.Windows.Forms.Button btnRefreshLessons;
         private System.Windows.Forms.Button btnDeleteAllLessonsForGroup;
         private System.Windows.Forms.Button btnDeleteLesson;
         private System.Windows.Forms.DataGridView dgvLessons;
@@ -535,6 +488,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colSubject;
         private System.Windows.Forms.DataGridViewTextBoxColumn colTeacher;
         private System.Windows.Forms.DataGridViewTextBoxColumn colRoom;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colAction;
     }
 }

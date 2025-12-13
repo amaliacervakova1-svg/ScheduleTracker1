@@ -68,9 +68,8 @@ namespace ScheduleClient
             btnDeleteLesson.Click += btnDeleteLesson_Click;
             btnDeleteAllLessonsForGroup.Click += btnDeleteAllLessonsForGroup_Click;
             cmbDirectionForLesson.SelectedIndexChanged += cmbDirectionForLesson_SelectedIndexChanged;
-            dgvLessons.CellContentClick += dgvLessons_CellContentClick;
-            btnRefreshGroups.Click += btnRefresh_Click;
-            btnRefreshLessons.Click += btnRefresh_Click;
+            cmbGroupForLesson.SelectedIndexChanged += CmbGroupForLesson_SelectedIndexChanged;
+            cmbGroupForLesson.SelectedIndexChanged += CmbGroupForLesson_SelectedIndexChanged;
             this.Load += AdminForm_Load;
         }
 
@@ -194,16 +193,6 @@ namespace ScheduleClient
 
         private void InitializePredefinedValues()
         {
-            // Заполняем ComboBox направлений для фильтра (вкладка "Расписание")
-            cmbDirectionForLesson.Items.Clear();
-            cmbDirectionForLesson.Items.Add("-- Все --");
-            cmbDirectionForLesson.Items.Add("ИТ");
-            cmbDirectionForLesson.Items.Add("ИБ");
-            cmbDirectionForLesson.Items.Add("П");
-            cmbDirectionForLesson.Items.Add("МК");
-            cmbDirectionForLesson.Items.Add("Э");
-            if (cmbDirectionForLesson.Items.Count > 0) cmbDirectionForLesson.SelectedIndex = 0;
-
             // Заполняем дни недели в расписании
             string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
             cmbAdminDay.Items.Clear();
@@ -273,14 +262,9 @@ namespace ScheduleClient
 
                 // Обновляем UI
                 UpdateGroupsList();
+                UpdateDirectionsListFromDatabase(); // <-- ВМЕСТО InitializePredefinedValues()
                 UpdateGroupSelectionForLessons();
-                RefreshLessonsGrid();
-
-                if (dgvLessons.Columns.Count > 1)
-                {
-                    // Скрываем предпоследний столбец — это столбец с Id
-                    dgvLessons.Columns[dgvLessons.Columns.Count - 2].Visible = false;
-                }
+                FilterLessonsGrid();
 
                 statusLabel.Text = $"Загружено: {groups.Count} групп, {lessons.Count} занятий";
                 Console.WriteLine("Загрузка данных завершена успешно");
@@ -318,7 +302,6 @@ namespace ScheduleClient
             cmbGroupForLesson.Items.Clear();
             cmbGroupForLesson.Items.Add("-- Выберите группу --");
 
-            // Если выбрано конкретное направление, фильтруем группы
             string selectedDirection = cmbDirectionForLesson.SelectedItem?.ToString();
 
             var filteredGroups = groups.AsEnumerable();
@@ -332,6 +315,9 @@ namespace ScheduleClient
 
             cmbGroupForLesson.SelectedIndex = 0;
             Console.WriteLine($"Обновлен список групп для выбора: {filteredGroups.Count()} групп");
+
+            // Автоматически фильтруем таблицу после обновления списка групп
+            FilterLessonsGrid();
         }
 
         private void RefreshLessonsGrid()
@@ -349,9 +335,16 @@ namespace ScheduleClient
                 string week = l.IsNumerator ? "Числитель" : "Знаменатель";
 
                 dgvLessons.Rows.Add(
-                    groupName, dayName, week, l.Time,
-                    l.Subject, l.Teacher, l.Room, l.Id
+                    groupName,     // colGroup
+                    dayName,       // colDay  
+                    week,          // colWeek
+                    l.Time,        // colTime
+                    l.Subject,     // colSubject
+                    l.Teacher,     // colTeacher
+                    l.Room         // colRoom
                 );
+                // Сохраняем ID в Tag строки (альтернативный способ хранения ID)
+                dgvLessons.Rows[dgvLessons.Rows.Count - 1].Tag = l.Id;
             }
 
             // Обновляем статистику
@@ -361,6 +354,7 @@ namespace ScheduleClient
 
         private void UpdateStatistics()
         {
+            UpdateFilteredStatistics(lessons.Count); // Показываем все по умолчанию
             lblStats.Text = $"Всего занятий: {lessons.Count} | Групп: {groups.Count}";
         }
 
@@ -431,9 +425,14 @@ namespace ScheduleClient
 
                     // Автоматически выбираем созданную группу в расписании
                     var createdGroup = await response.Content.ReadFromJsonAsync<Group>();
-                    if (createdGroup != null)
+                    if (response.IsSuccessStatusCode)
                     {
-                        // Ищем направление в ComboBox
+                        // Обновляем данные
+                        await LoadData(); // Теперь здесь обновится и список направлений
+
+                        ShowSuccess($"Группа '{groupName}' успешно создана");
+
+                        // Автоматически выбираем созданное направление
                         string directionPart = groupName.Split('-')[0];
                         for (int i = 0; i < cmbDirectionForLesson.Items.Count; i++)
                         {
@@ -444,24 +443,12 @@ namespace ScheduleClient
                             }
                         }
 
-                        UpdateGroupSelectionForLessons();
-
-                        // Ищем группу в списке
-                        for (int i = 0; i < cmbGroupForLesson.Items.Count; i++)
-                        {
-                            if (cmbGroupForLesson.Items[i].ToString() == groupName)
-                            {
-                                cmbGroupForLesson.SelectedIndex = i;
-                                break;
-                            }
-                        }
+                        // Очищаем поля ввода
+                        txtDirection.Text = "Напр. (ИТ, ИБ...)";
+                        txtDirection.ForeColor = Color.Gray;
+                        txtGroupNum.Text = "Номер (21, 31...)";
+                        txtGroupNum.ForeColor = Color.Gray;
                     }
-
-                    // Очищаем поля ввода
-                    txtDirection.Text = "Напр. (ИТ, ИБ...)";
-                    txtDirection.ForeColor = Color.Gray;
-                    txtGroupNum.Text = "Номер (21, 31...)";
-                    txtGroupNum.ForeColor = Color.Gray;
                 }
                 else
                 {
@@ -571,9 +558,26 @@ namespace ScheduleClient
 
         private void cmbDirectionForLesson_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Console.WriteLine($"Изменен фильтр направления: {cmbDirectionForLesson.SelectedItem}");
+            if (isDataLoading) return;
+
+            Console.WriteLine($"Изменено направление: {cmbDirectionForLesson.SelectedItem}");
+
+            // Обновляем список групп для выбора
             UpdateGroupSelectionForLessons();
+
+            // Фильтруем таблицу
+            FilterLessonsGrid();
         }
+        private void CmbGroupForLesson_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (isDataLoading) return;
+
+            Console.WriteLine($"Изменена группа: {cmbGroupForLesson.SelectedItem}");
+
+            // Фильтруем таблицу
+            FilterLessonsGrid();
+        }
+
 
         private async void btnAddLesson_Click(object sender, EventArgs e)
         {
@@ -734,79 +738,73 @@ namespace ScheduleClient
 
         private async void btnDeleteLesson_Click(object sender, EventArgs e)
         {
+            Console.WriteLine("Нажата кнопка 'Удалить выбранную пару'");
+
             if (dgvLessons.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Выберите пару для удаления в таблице");
+                ShowWarning("Выберите пару для удаления в таблице");
                 return;
             }
 
             DataGridViewRow row = dgvLessons.SelectedRows[0];
 
-            // Id по индексу (предпоследний столбец)
-            object idObj = row.Cells[dgvLessons.Columns.Count - 2].Value;
-            if (idObj == null || !int.TryParse(idObj.ToString(), out int lessonId))
+            // Получаем ID из Tag строки
+            if (row.Tag == null || !(row.Tag is int lessonId))
             {
-                MessageBox.Show("Не удалось получить ID пары");
+                ShowError("Ошибка", "Не удалось получить ID пары");
                 return;
             }
 
-            if (MessageBox.Show("Удалить эту пару из расписания?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            Console.WriteLine($"Удаление занятия ID: {lessonId}");
+            Console.WriteLine($"URL запроса: {BaseUrl}/api/schedule/{lessonId}");
+
+            if (MessageBox.Show($"Удалить эту пару из расписания?\n\nID: {lessonId}",
+                "Подтверждение удаления",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 try
                 {
-                    // Используем новый HttpClient только для DELETE — это решает проблему с "зависшим" соединением
-                    using (var tempHttp = new HttpClient())
-                    {
-                        var response = await tempHttp.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
+                    Cursor = Cursors.WaitCursor;
+                    statusLabel.Text = "Удаление занятия...";
 
-                        if (response.IsSuccessStatusCode)
-                        {
-                            MessageBox.Show("Пара успешно удалена!");
-                        }
-                        else
-                        {
-                            MessageBox.Show("Ошибка удаления на сервере");
-                            return;
-                        }
-                    }
+                    // Используем основной HttpClient
+                    var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/{lessonId}");
 
-                    // Обновляем таблицу (отдельно, с ловлей ошибки)
-                    try
+                    if (response.IsSuccessStatusCode)
                     {
+                        ShowSuccess($"Пара ID {lessonId} успешно удалена!");
+
+                        // Обновляем данные
                         await LoadData();
+
+                        // Прокручиваем к началу
+                        if (dgvLessons.Rows.Count > 0)
+                        {
+                            dgvLessons.FirstDisplayedScrollingRowIndex = 0;
+                        }
                     }
-                    catch
+                    else
                     {
-                        MessageBox.Show("Таблица не обновилась автоматически. Нажмите \"Обновить\" вручную.");
+                        var error = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Ошибка сервера: {error}");
+                        ShowError($"Ошибка удаления ({(int)response.StatusCode})", error);
                     }
+                }
+                catch (HttpRequestException ex)
+                {
+                    Console.WriteLine($"HTTP ошибка: {ex.Message}");
+                    ShowError("Ошибка подключения",
+                        $"Не удалось подключиться к серверу.\nАдрес: {BaseUrl}\n\nДетали: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Ошибка связи: " + ex.Message);
+                    Console.WriteLine($"Общая ошибка: {ex.Message}\n{ex.StackTrace}");
+                    ShowError("Ошибка удаления", ex.Message);
                 }
-            }
-        }
-
-        private async void dgvLessons_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            // Клик по последнему столбцу ("Удалить")
-            if (e.ColumnIndex == dgvLessons.Columns.Count - 1)
-            {
-                // Id — в предпоследнем столбце
-                var idCell = dgvLessons.Rows[e.RowIndex].Cells[dgvLessons.Columns.Count - 2].Value;
-
-                if (idCell == null || !int.TryParse(idCell.ToString(), out int lessonId))
+                finally
                 {
-                    MessageBox.Show("Не удалось получить ID");
-                    return;
-                }
-
-                if (MessageBox.Show("Удалить эту пару?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    await http.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
-                    await LoadData(); // обновляем таблицу
+                    Cursor = Cursors.Default;
+                    statusLabel.Text = "Готово";
                 }
             }
         }
@@ -908,6 +906,131 @@ namespace ScheduleClient
                 }
             }
         }
+
+        private void FilterLessonsGrid()
+        {
+            try
+            {
+                Console.WriteLine("Фильтрация таблицы занятий...");
+
+                // Получаем выбранные фильтры
+                string selectedDirection = cmbDirectionForLesson.SelectedItem?.ToString();
+                string selectedGroup = cmbGroupForLesson.SelectedItem?.ToString();
+
+                Console.WriteLine($"Фильтры: Направление='{selectedDirection}', Группа='{selectedGroup}'");
+
+                // Фильтруем занятия
+                var filteredLessons = lessons.AsEnumerable();
+
+                // Фильтр по направлению
+                if (!string.IsNullOrEmpty(selectedDirection) && selectedDirection != "-- Все --")
+                {
+                    // Находим группы, которые начинаются с выбранного направления
+                    var directionGroups = groups
+                        .Where(g => g.Name.StartsWith(selectedDirection, StringComparison.OrdinalIgnoreCase))
+                        .Select(g => g.Id)
+                        .ToList();
+
+                    filteredLessons = filteredLessons.Where(l => directionGroups.Contains(l.GroupId));
+                    Console.WriteLine($"Фильтр по направлению '{selectedDirection}': найдено {directionGroups.Count} групп");
+                }
+
+                // Фильтр по конкретной группе
+                if (!string.IsNullOrEmpty(selectedGroup) && selectedGroup != "-- Выберите группу --")
+                {
+                    var group = groups.FirstOrDefault(g => g.Name == selectedGroup);
+                    if (group != null)
+                    {
+                        filteredLessons = filteredLessons.Where(l => l.GroupId == group.Id);
+                        Console.WriteLine($"Фильтр по группе '{selectedGroup}' (ID: {group.Id})");
+                    }
+                }
+
+                // Очищаем таблицу
+                dgvLessons.Rows.Clear();
+
+                // Заполняем таблицу отфильтрованными данными
+                string[] russianDays = { "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота" };
+
+                foreach (var l in filteredLessons.OrderBy(x => x.GroupId).ThenBy(x => x.DayOfWeek).ThenBy(x => x.Time))
+                {
+                    string groupName = groups.FirstOrDefault(g => g.Id == l.GroupId)?.Name ?? "—";
+
+                    int dayIndex = (int)l.DayOfWeek;
+                    string dayName = (dayIndex >= 0 && dayIndex <= 6) ? russianDays[dayIndex] : $"День {dayIndex}";
+
+                    string week = l.IsNumerator ? "Числитель" : "Знаменатель";
+
+                    dgvLessons.Rows.Add(
+                        groupName,     // colGroup
+                        dayName,       // colDay  
+                        week,          // colWeek
+                        l.Time,        // colTime
+                        l.Subject,     // colSubject
+                        l.Teacher,     // colTeacher
+                        l.Room         // colRoom
+                    );
+
+                    // Сохраняем ID в Tag строки
+                    dgvLessons.Rows[dgvLessons.Rows.Count - 1].Tag = l.Id;
+                }
+
+                // Обновляем статистику
+                UpdateFilteredStatistics(filteredLessons.Count());
+                Console.WriteLine($"Отображено {filteredLessons.Count()} записей после фильтрации");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при фильтрации таблицы: {ex.Message}");
+            }
+        }
+
+        private void UpdateFilteredStatistics(int filteredCount)
+        {
+            lblStats.Text = $"Всего занятий: {lessons.Count} | Групп: {groups.Count} | Отфильтровано: {filteredCount}";
+        }
+
+        private void UpdateDirectionsListFromDatabase()
+        {
+            try
+            {
+                Console.WriteLine("Обновление списка направлений из базы данных...");
+
+                cmbDirectionForLesson.Items.Clear();
+                cmbDirectionForLesson.Items.Add("-- Все --");
+
+                if (groups == null || groups.Count == 0)
+                {
+                    Console.WriteLine("Список групп пуст, направления не могут быть извлечены");
+                    return;
+                }
+
+                // Извлекаем направления из названий групп (формат: "НАПР-НОМЕР")
+                var directions = groups
+                    .Select(g => g.Name.Split('-').FirstOrDefault()?.Trim().ToUpper())
+                    .Where(dir => !string.IsNullOrEmpty(dir))
+                    .Distinct()
+                    .OrderBy(dir => dir)
+                    .ToList();
+
+                Console.WriteLine($"Найдено направлений в базе: {directions.Count}");
+
+                foreach (var direction in directions)
+                {
+                    cmbDirectionForLesson.Items.Add(direction);
+                    Console.WriteLine($"Добавлено направление: {direction}");
+                }
+
+                if (cmbDirectionForLesson.Items.Count > 0)
+                    cmbDirectionForLesson.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обновлении списка направлений: {ex.Message}");
+            }
+        }
+
+
 
         // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
 

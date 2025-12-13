@@ -51,9 +51,7 @@ namespace ScheduleClient
             toolTip.SetToolTip(cmbDay, "Выберите день недели");
             toolTip.SetToolTip(rbNumerator, "Числитель - верхняя неделя");
             toolTip.SetToolTip(rbDenominator, "Знаменатель - нижняя неделя");
-            toolTip.SetToolTip(btnShow, "Показать расписание для выбранных параметров");
             toolTip.SetToolTip(btnAdmin, "Вход для администратора (требуется пароль)");
-            toolTip.SetToolTip(btnRefresh, "Обновить список групп");
         }
 
         private void BindEventHandlers()
@@ -63,9 +61,7 @@ namespace ScheduleClient
             cmbDay.SelectedIndexChanged += CmbDay_SelectedIndexChanged;
             rbNumerator.CheckedChanged += RbNumerator_CheckedChanged;
             rbDenominator.CheckedChanged += RbDenominator_CheckedChanged;
-            btnShow.Click += BtnShow_Click;
             btnAdmin.Click += BtnAdmin_Click;
-            btnRefresh.Click += BtnRefresh_Click;
             this.Load += Form1_Load;
         }
 
@@ -119,9 +115,7 @@ namespace ScheduleClient
             cmbDay.Enabled = enabled;
             rbNumerator.Enabled = enabled;
             rbDenominator.Enabled = enabled;
-            btnShow.Enabled = enabled;
             btnAdmin.Enabled = enabled;
-            btnRefresh.Enabled = enabled;
         }
 
         private async Task LoadGroupsAsync()
@@ -262,24 +256,6 @@ namespace ScheduleClient
                 return;
 
             await LoadScheduleAsync();
-        }
-
-        private async void BtnShow_Click(object sender, EventArgs e)
-        {
-            await LoadScheduleAsync();
-        }
-
-        private async void BtnRefresh_Click(object sender, EventArgs e)
-        {
-            await LoadGroupsAsync();
-            UpdateGroupsList();
-
-            if (cmbGroup.SelectedItem != null &&
-                cmbGroup.SelectedItem.ToString() != "Группы не загружены" &&
-                cmbGroup.SelectedItem.ToString() != "Группы не найдены")
-            {
-                await LoadScheduleAsync();
-            }
         }
 
         private async Task LoadScheduleAsync()
@@ -465,7 +441,6 @@ namespace ScheduleClient
             listSchedule.Items.Add(" Попробуйте:");
             listSchedule.Items.Add("   1. Проверить подключение к интернету");
             listSchedule.Items.Add("   2. Убедиться, что сервер запущен");
-            listSchedule.Items.Add("   3. Обновить данные (кнопка 'Обновить данные')");
         }
 
         private int GetWeekNumber(DateTime date)

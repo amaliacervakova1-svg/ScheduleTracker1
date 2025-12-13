@@ -19,19 +19,9 @@ namespace ScheduleClient
         private List<Group> groups;
         private List<Lesson> lessons;
 
-        private const string BaseUrl = "http://localhost:5032";
 
         // Временные периоды для выпадающего списка
-        private readonly string[] timePeriods =
-        {
-            "08:30–10:05",
-            "10:15–11:50",
-            "12:00–13:35",
-            "14:00–15:35",
-            "15:45–17:20",
-            "17:30–19:05",
-            "19:15–20:50"
-        };
+        private readonly string[] timePeriods = AppConfig.TimePeriods;
 
         // Для хранения подсказок
         private readonly ToolTip toolTip = new ToolTip();
@@ -42,7 +32,7 @@ namespace ScheduleClient
             InitializeComponent();
 
             http = new HttpClient();
-            http.Timeout = TimeSpan.FromSeconds(30);
+            http.Timeout = AppConfig.HttpTimeout;
             groups = new List<Group>();
             lessons = new List<Lesson>();
 
@@ -196,7 +186,7 @@ namespace ScheduleClient
             // Заполняем дни недели в расписании
             string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
             cmbAdminDay.Items.Clear();
-            cmbAdminDay.Items.AddRange(days);
+            cmbAdminDay.Items.AddRange(AppConfig.DaysOfWeek);
             cmbAdminDay.SelectedIndex = 0;
 
             // Выбираем числитель по умолчанию
@@ -212,7 +202,7 @@ namespace ScheduleClient
                 Console.WriteLine("Начинаю загрузку данных...");
 
                 // Загружаем группы
-                var groupsResponse = await http.GetAsync($"{BaseUrl}/api/groups");
+                var groupsResponse = await http.GetAsync($"{AppConfig.BaseUrl}/api/groups");
                 Console.WriteLine($"Статус загрузки групп: {groupsResponse.StatusCode}");
 
                 if (groupsResponse.IsSuccessStatusCode)
@@ -232,7 +222,7 @@ namespace ScheduleClient
                 }
 
                 // Загружаем занятия
-                var lessonsResponse = await http.GetAsync($"{BaseUrl}/api/schedule/all");
+                var lessonsResponse = await http.GetAsync($"{AppConfig.BaseUrl}/api/schedule/all");
                 Console.WriteLine($"Статус загрузки занятий: {lessonsResponse.StatusCode}");
 
                 if (lessonsResponse.IsSuccessStatusCode)
@@ -262,7 +252,7 @@ namespace ScheduleClient
 
                 // Обновляем UI
                 UpdateGroupsList();
-                UpdateDirectionsListFromDatabase(); // <-- ВМЕСТО InitializePredefinedValues()
+                UpdateDirectionsListFromDatabase();
                 UpdateGroupSelectionForLessons();
                 FilterLessonsGrid();
 
@@ -271,7 +261,7 @@ namespace ScheduleClient
             }
             catch (HttpRequestException ex)
             {
-                string errorMsg = $"Ошибка подключения к серверу.\nУбедитесь, что сервер запущен по адресу: {BaseUrl}\n\nДетали: {ex.Message}";
+                string errorMsg = $"Ошибка подключения к серверу.\nУбедитесь, что сервер запущен по адресу: {AppConfig.BaseUrl}\n\nДетали: {ex.Message}";
                 Console.WriteLine($"HTTP ошибка: {errorMsg}");
                 ShowError("Ошибка подключения к серверу", errorMsg);
             }
@@ -412,7 +402,7 @@ namespace ScheduleClient
                 Console.WriteLine($"Отправка запроса на создание группы: {groupName}");
 
                 var group = new Group { Name = groupName };
-                var response = await http.PostAsJsonAsync($"{BaseUrl}/api/groups", group);
+                var response = await http.PostAsJsonAsync($"{AppConfig.BaseUrl}/api/groups", group);
 
                 Console.WriteLine($"Ответ сервера: {response.StatusCode}");
 
@@ -515,7 +505,7 @@ namespace ScheduleClient
 
                     // Сначала удаляем все занятия группы
                     Console.WriteLine($"Удаление занятий группы ID: {groupId}");
-                    var deleteLessonsResponse = await http.DeleteAsync($"{BaseUrl}/api/schedule/group/{groupId}");
+                    var deleteLessonsResponse = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/group/{groupId}");
 
                     if (!deleteLessonsResponse.IsSuccessStatusCode)
                     {
@@ -527,7 +517,7 @@ namespace ScheduleClient
 
                     // Затем удаляем саму группу
                     Console.WriteLine($"Удаление группы ID: {groupId}");
-                    var response = await http.DeleteAsync($"{BaseUrl}/api/groups/{groupId}");
+                    var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/groups/{groupId}");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -629,7 +619,7 @@ namespace ScheduleClient
                 Console.WriteLine($"JSON: {System.Text.Json.JsonSerializer.Serialize(lessonDto)}");
 
                 // Отправляем DTO, а не Lesson
-                var response = await http.PostAsJsonAsync($"{BaseUrl}/api/schedule", lessonDto);
+                var response = await http.PostAsJsonAsync($"{AppConfig.BaseUrl}/api/schedule", lessonDto);
 
                 Console.WriteLine($"Ответ сервера: {response.StatusCode}");
 
@@ -656,7 +646,7 @@ namespace ScheduleClient
             catch (HttpRequestException ex)
             {
                 Console.WriteLine($"HTTP ошибка: {ex.Message}");
-                ShowError("Ошибка подключения", $"Не удалось подключиться к серверу.\nАдрес: {BaseUrl}\n\n{ex.Message}");
+                ShowError("Ошибка подключения", $"Не удалось подключиться к серверу.\nАдрес: {AppConfig.BaseUrl}\n\n{ex.Message}");
             }
             catch (Exception ex)
             {
@@ -756,7 +746,7 @@ namespace ScheduleClient
             }
 
             Console.WriteLine($"Удаление занятия ID: {lessonId}");
-            Console.WriteLine($"URL запроса: {BaseUrl}/api/schedule/{lessonId}");
+            Console.WriteLine($"URL запроса: {AppConfig.BaseUrl}/api/schedule/{lessonId}");
 
             if (MessageBox.Show($"Удалить эту пару из расписания?\n\nID: {lessonId}",
                 "Подтверждение удаления",
@@ -768,7 +758,7 @@ namespace ScheduleClient
                     statusLabel.Text = "Удаление занятия...";
 
                     // Используем основной HttpClient
-                    var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/{lessonId}");
+                    var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/{lessonId}");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -794,7 +784,7 @@ namespace ScheduleClient
                 {
                     Console.WriteLine($"HTTP ошибка: {ex.Message}");
                     ShowError("Ошибка подключения",
-                        $"Не удалось подключиться к серверу.\nАдрес: {BaseUrl}\n\nДетали: {ex.Message}");
+                        $"Не удалось подключиться к серверу.\nАдрес: {AppConfig.BaseUrl}\n\nДетали: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -816,7 +806,7 @@ namespace ScheduleClient
                 Cursor = Cursors.WaitCursor;
                 Console.WriteLine($"Удаление занятия ID: {id}");
 
-                var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/{id}");
+                var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/{id}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -880,7 +870,7 @@ namespace ScheduleClient
                     statusLabel.Text = $"Удаление {lessonCount} занятий...";
                     Console.WriteLine($"Удаление всех занятий группы: {selectedGroupName}");
 
-                    var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/group/{group.Id}");
+                    var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/group/{group.Id}");
 
                     if (response.IsSuccessStatusCode)
                     {

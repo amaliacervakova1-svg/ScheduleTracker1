@@ -17,14 +17,11 @@ namespace ScheduleClient
         private bool isLoading = false;
         private Label statusLabel;
 
+        private const string BaseUrl = "http://localhost:5032";
 
         public Form1()
         {
             InitializeComponent();
-
-            // Логирование конфигурации
-            AppConfig.LogConfiguration();
-
             CreateStatusLabel();
             SetupToolTips();
             BindEventHandlers();
@@ -36,7 +33,7 @@ namespace ScheduleClient
             {
                 Text = "Готово",
                 Dock = DockStyle.Bottom,
-                Height = AppConfig.StatusLabelHeight,
+                Height = 25,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Font = new Font("Segoe UI", 9),
                 BorderStyle = BorderStyle.FixedSingle,
@@ -83,7 +80,7 @@ namespace ScheduleClient
                 // Заполняем дни недели
                 string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
                 cmbDay.Items.Clear();
-                cmbDay.Items.AddRange(AppConfig.DaysOfWeek);
+                cmbDay.Items.AddRange(days);
 
                 // Устанавливаем сегодняшний день
                 int todayIndex = (int)DateTime.Today.DayOfWeek;
@@ -128,7 +125,7 @@ namespace ScheduleClient
                 statusLabel.Text = "Загрузка групп...";
                 http.Timeout = TimeSpan.FromSeconds(10);
 
-                var response = await http.GetAsync($"{AppConfig.BaseUrl}/api/groups");
+                var response = await http.GetAsync($"{BaseUrl}/api/groups");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -146,7 +143,7 @@ namespace ScheduleClient
                         .ToList();
 
                     cmbDirection.Items.Clear();
-                    cmbDirection.Items.Add("Выберете направления");
+                    cmbDirection.Items.Add("Все направления");
                     foreach (var d in directions)
                         cmbDirection.Items.Add(d);
 
@@ -165,7 +162,7 @@ namespace ScheduleClient
             }
             catch (HttpRequestException ex)
             {
-                MessageBox.Show($"Не удалось подключиться к серверу.\nАдрес: {AppConfig.BaseUrl}\n\n{ex.Message}",
+                MessageBox.Show($"Не удалось подключиться к серверу.\nАдрес: {BaseUrl}\n\n{ex.Message}",
                     "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 statusLabel.Text = "Нет подключения к серверу";
             }
@@ -296,7 +293,7 @@ namespace ScheduleClient
                 listSchedule.Items.Add("Загрузка расписания...");
                 listSchedule.Refresh();
 
-                string url = $"{AppConfig.BaseUrl}/api/schedule?group={Uri.EscapeDataString(groupName)}&day={dayOfWeekValue}&numerator={isNumerator}";
+                string url = $"{BaseUrl}/api/schedule?group={Uri.EscapeDataString(groupName)}&day={dayOfWeekValue}&numerator={isNumerator}";
                 Console.WriteLine($"Запрос к: {url}");
 
                 var response = await http.GetAsync(url);
@@ -332,7 +329,7 @@ namespace ScheduleClient
             catch (HttpRequestException ex)
             {
                 Console.WriteLine($"HTTP ошибка: {ex.Message}");
-                ShowErrorInListBox($"Ошибка подключения: {ex.Message}\n\nПроверьте, запущен ли сервер:\n{AppConfig.BaseUrl}");
+                ShowErrorInListBox($"Ошибка подключения: {ex.Message}\n\nПроверьте, запущен ли сервер:\n{BaseUrl}");
                 statusLabel.Text = "Нет подключения к серверу";
             }
             catch (Exception ex)

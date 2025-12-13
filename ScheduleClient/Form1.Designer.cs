@@ -30,7 +30,6 @@
         {
             this.cmbDirection = new System.Windows.Forms.ComboBox();
             this.cmbGroup = new System.Windows.Forms.ComboBox();
-            this.btnShow = new System.Windows.Forms.Button();
             this.listSchedule = new System.Windows.Forms.ListBox();
             this.lblTitle = new System.Windows.Forms.Label();
             this.cmbDay = new System.Windows.Forms.ComboBox();
@@ -58,15 +57,6 @@
             this.cmbGroup.Size = new System.Drawing.Size(121, 24);
             this.cmbGroup.TabIndex = 1;
             this.cmbGroup.Text = "Группа";
-            // 
-            // btnShow
-            // 
-            this.btnShow.Location = new System.Drawing.Point(582, 11);
-            this.btnShow.Name = "btnShow";
-            this.btnShow.Size = new System.Drawing.Size(206, 61);
-            this.btnShow.TabIndex = 2;
-            this.btnShow.Text = "Показать расписание";
-            this.btnShow.UseVisualStyleBackColor = true;
             // 
             // listSchedule
             // 
@@ -137,7 +127,10 @@
             this.btnAdmin.TabIndex = 9;
             this.btnAdmin.Text = "Администрирование";
             this.btnAdmin.UseVisualStyleBackColor = true;
+<<<<<<< HEAD
+=======
             this.btnAdmin.Click += new System.EventHandler(this.btnAdmin_Click);
+>>>>>>> master
             // 
             // Form1
             // 
@@ -149,7 +142,6 @@
             this.Controls.Add(this.cmbDay);
             this.Controls.Add(this.lblTitle);
             this.Controls.Add(this.listSchedule);
-            this.Controls.Add(this.btnShow);
             this.Controls.Add(this.cmbGroup);
             this.Controls.Add(this.cmbDirection);
             this.Name = "Form1";
@@ -164,7 +156,6 @@
 
         private System.Windows.Forms.ComboBox cmbDirection;
         private System.Windows.Forms.ComboBox cmbGroup;
-        private System.Windows.Forms.Button btnShow;
         private System.Windows.Forms.ListBox listSchedule;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.ComboBox cmbDay;

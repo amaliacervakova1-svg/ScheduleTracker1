@@ -740,47 +740,49 @@ namespace ScheduleClient
                 return;
             }
 
-            DataGridViewRow selectedRow = dgvLessons.SelectedRows[0];
+            DataGridViewRow row = dgvLessons.SelectedRows[0];
 
-            // Id урока — в предпоследнем столбце (индекс Columns.Count - 2)
-            object idObj = selectedRow.Cells[dgvLessons.Columns.Count - 2].Value;
-
+            // Id по индексу (предпоследний столбец)
+            object idObj = row.Cells[dgvLessons.Columns.Count - 2].Value;
             if (idObj == null || !int.TryParse(idObj.ToString(), out int lessonId))
             {
-                MessageBox.Show("Не удалось получить ID выбранной пары");
+                MessageBox.Show("Не удалось получить ID пары");
                 return;
             }
 
-            string groupName = selectedRow.Cells[0].Value?.ToString() ?? "неизвестно";
-            string subject = selectedRow.Cells[4].Value?.ToString() ?? "неизвестно";
-
-            if (MessageBox.Show($"Удалить пару?\nГруппа: {groupName}\nПредмет: {subject}",
-                "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (MessageBox.Show("Удалить эту пару из расписания?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 try
                 {
-                    var response = await http.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
-                    if (response.IsSuccessStatusCode)
+                    // Используем новый HttpClient только для DELETE — это решает проблему с "зависшим" соединением
+                    using (var tempHttp = new HttpClient())
                     {
-                        MessageBox.Show("Пара успешно удалена!");
-                        try
+                        var response = await tempHttp.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
+
+                        if (response.IsSuccessStatusCode)
                         {
-                            await LoadData(); // пробуем обновить
+                            MessageBox.Show("Пара успешно удалена!");
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            MessageBox.Show("Не удалось обновить данные после удаления. Попробуйте нажать \"Обновить\" вручную.\nОшибка: " + ex.Message);
-                            // Можно добавить кнопку "Обновить" на форму, если хочешь
+                            MessageBox.Show("Ошибка удаления на сервере");
+                            return;
                         }
                     }
-                    else
+
+                    // Обновляем таблицу (отдельно, с ловлей ошибки)
+                    try
                     {
-                        MessageBox.Show("Ошибка удаления на сервере");
+                        await LoadData();
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Таблица не обновилась автоматически. Нажмите \"Обновить\" вручную.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Ошибка: " + ex.Message);
+                    MessageBox.Show("Ошибка связи: " + ex.Message);
                 }
             }
         }

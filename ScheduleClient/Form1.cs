@@ -143,7 +143,7 @@ namespace ScheduleClient
                         .ToList();
 
                     cmbDirection.Items.Clear();
-                    cmbDirection.Items.Add("Все направления");
+                    cmbDirection.Items.Add("Выберете направления");
                     foreach (var d in directions)
                         cmbDirection.Items.Add(d);
 

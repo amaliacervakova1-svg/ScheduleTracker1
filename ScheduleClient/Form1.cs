@@ -1,12 +1,12 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using ScheduleClient;
+
 
 namespace ScheduleClient
 {
@@ -14,13 +14,17 @@ namespace ScheduleClient
     {
         private readonly HttpClient http = new HttpClient();
         private List<Group> allGroups = new List<Group>();
+<<<<<<< HEAD
         private bool isLoading = false;
         private Label statusLabel;
 
+=======
+>>>>>>> master
 
         public Form1()
         {
             InitializeComponent();
+<<<<<<< HEAD
 
             // Логирование конфигурации
             AppConfig.LogConfiguration();
@@ -66,20 +70,25 @@ namespace ScheduleClient
             rbDenominator.CheckedChanged += RbDenominator_CheckedChanged;
             btnAdmin.Click += BtnAdmin_Click;
             this.Load += Form1_Load;
+=======
+>>>>>>> master
         }
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            Text = "Расписание занятий - Студенческий портал";
+            Text = "Расписание занятий";
+            await LoadGroupsAsync();
 
-            try
-            {
-                isLoading = true;
-                SetControlsEnabled(false);
-                statusLabel.Text = "Загрузка данных...";
+            // Заполняем дни недели по-русски
+            string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
+            cmbDay.Items.AddRange(days);
 
-                await LoadGroupsAsync();
+            // Сегодняшний день
+            int todayIndex = (int)DateTime.Today.DayOfWeek - 1;
+            if (todayIndex < 0) todayIndex = 6; // воскресенье
+            cmbDay.SelectedIndex = todayIndex;
 
+<<<<<<< HEAD
                 // Заполняем дни недели
                 string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
                 cmbDay.Items.Clear();
@@ -122,12 +131,24 @@ namespace ScheduleClient
         }
 
         private async Task LoadGroupsAsync()
+=======
+            // Числитель / знаменатель по текущей неделе
+            int weekNum = GetWeekNumber(DateTime.Today);
+            if (weekNum % 2 == 1)
+                rbNumerator.Checked = true;
+            else
+                rbDenominator.Checked = true;
+        }
+
+        private async System.Threading.Tasks.Task LoadGroupsAsync()
+>>>>>>> master
         {
             try
             {
-                statusLabel.Text = "Загрузка групп...";
-                http.Timeout = TimeSpan.FromSeconds(10);
+                allGroups = await http.GetFromJsonAsync<List<Group>>("https://localhost:7233/api/groups")
+                           ?? new List<Group>();
 
+<<<<<<< HEAD
                 var response = await http.GetAsync($"{AppConfig.BaseUrl}/api/groups");
 
                 if (response.IsSuccessStatusCode)
@@ -162,9 +183,23 @@ namespace ScheduleClient
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     statusLabel.Text = "Ошибка загрузки групп";
                 }
+=======
+                var directions = allGroups
+                    .Select(g => g.Name.Length >= 2 ? g.Name.Substring(0, 2).ToUpper() : g.Name)
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToList();
+
+                cmbDirection.Items.Clear();
+                cmbDirection.Items.Add("Все направления");
+                foreach (var d in directions)
+                    cmbDirection.Items.Add(d);
+                cmbDirection.SelectedIndex = 0;
+>>>>>>> master
             }
-            catch (HttpRequestException ex)
+            catch
             {
+<<<<<<< HEAD
                 MessageBox.Show($"Не удалось подключиться к серверу.\nАдрес: {AppConfig.BaseUrl}\n\n{ex.Message}",
                     "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 statusLabel.Text = "Нет подключения к серверу";
@@ -174,35 +209,34 @@ namespace ScheduleClient
                 MessageBox.Show($"Ошибка загрузки групп: {ex.Message}", "Ошибка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 statusLabel.Text = "Ошибка загрузки данных";
+=======
+                MessageBox.Show("Не удалось загрузить группы. Запустите сервер (F5).", "Ошибка подключения",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+>>>>>>> master
             }
         }
 
-        private void UpdateGroupsList()
+        private void cmbDirection_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (isLoading) return;
-
             string selectedDir = cmbDirection.SelectedItem?.ToString() ?? "";
 
             cmbGroup.Items.Clear();
 
-            if (allGroups == null || allGroups.Count == 0)
-            {
-                cmbGroup.Items.Add("Группы не загружены");
-                cmbGroup.SelectedIndex = 0;
-                return;
-            }
-
             var filtered = string.IsNullOrEmpty(selectedDir) || selectedDir == "Все направления"
                 ? allGroups
-                : allGroups.Where(g => g.Name.StartsWith(selectedDir, StringComparison.OrdinalIgnoreCase));
+                : allGroups.Where(g => g.Name.StartsWith(selectedDir));
 
             foreach (var g in filtered.OrderBy(g => g.Name))
                 cmbGroup.Items.Add(g.Name);
 
-            if (cmbGroup.Items.Count > 0)
-                cmbGroup.SelectedIndex = 0;
-            else
+            if (cmbGroup.Items.Count > 0) cmbGroup.SelectedIndex = 0;
+        }
+
+        private async void btnShow_Click(object sender, EventArgs e)
+        {
+            if (cmbGroup.SelectedItem == null || cmbDay.SelectedItem == null)
             {
+<<<<<<< HEAD
                 cmbGroup.Items.Add("Группы не найдены");
                 cmbGroup.SelectedIndex = 0;
             }
@@ -276,78 +310,62 @@ namespace ScheduleClient
             {
                 MessageBox.Show("Выберите день недели", "Внимание",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+=======
+                MessageBox.Show("Выберите группу и день недели");
+>>>>>>> master
                 return;
             }
 
             string groupName = cmbGroup.SelectedItem.ToString();
-
-            // Преобразование дня недели
-            int dayIndex = cmbDay.SelectedIndex;
-            int dayOfWeekValue = (dayIndex == 6) ? 0 : dayIndex + 1;
-
+            int dayIndex = cmbDay.SelectedIndex;                    // 0 = Понедельник … 6 = Воскресенье
             bool isNumerator = rbNumerator.Checked;
 
             try
             {
-                isLoading = true;
-                SetControlsEnabled(false);
-                statusLabel.Text = "Загрузка расписания...";
-                listSchedule.Items.Clear();
-                listSchedule.Items.Add("Загрузка расписания...");
-                listSchedule.Refresh();
+                string url = $"https://localhost:7233/api/schedule?group={Uri.EscapeDataString(groupName)}&day={dayIndex}&numerator={isNumerator.ToString().ToLower()}";
 
+                var lessons = await http.GetFromJsonAsync<List<Lesson>>(url);
+
+                listSchedule.Items.Clear();
+
+<<<<<<< HEAD
                 string url = $"{AppConfig.BaseUrl}/api/schedule?group={Uri.EscapeDataString(groupName)}&day={dayOfWeekValue}&numerator={isNumerator}";
                 Console.WriteLine($"Запрос к: {url}");
+=======
+                string weekType = isNumerator ? "ЧИСЛИТЕЛЬ" : "ЗНАМЕНАТЕЛЬ";
+                listSchedule.Items.Add($" {groupName} — {cmbDay.SelectedItem} ({weekType})");
+                listSchedule.Items.Add(new string('═', 70));
+>>>>>>> master
 
-                var response = await http.GetAsync(url);
-                Console.WriteLine($"Статус ответа: {response.StatusCode}");
-
-                if (response.IsSuccessStatusCode)
+                if (lessons == null || lessons.Count == 0)
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ответ сервера: {responseString.Substring(0, Math.Min(responseString.Length, 200))}...");
-
-                    try
-                    {
-                        var lessons = await response.Content.ReadFromJsonAsync<List<Lesson>>();
-                        Console.WriteLine($"Успешно десериализовано {lessons?.Count ?? 0} занятий");
-                        DisplaySchedule(groupName, dayIndex, isNumerator, lessons);
-                        statusLabel.Text = "Расписание загружено";
-                    }
-                    catch (JsonException ex)
-                    {
-                        Console.WriteLine($"Ошибка десериализации JSON: {ex.Message}");
-                        ShowErrorInListBox($"Ошибка формата данных: {ex.Message}\n\nОтвет сервера:\n{responseString}");
-                        statusLabel.Text = "Ошибка формата данных";
-                    }
+                    listSchedule.Items.Add("     Пар нет — можно отдыхать!");
+                    return;
                 }
-                else
+
+                foreach (var l in lessons.OrderBy(x => x.Time))
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ошибка сервера: {error}");
-                    ShowErrorInListBox($"Ошибка сервера ({(int)response.StatusCode}): {error}");
-                    statusLabel.Text = "Ошибка загрузки";
+                    listSchedule.Items.Add($" {l.Time}   {l.Subject}");
+                    listSchedule.Items.Add($"            ┗ {l.Teacher}  ·  {l.Room}");
+                    listSchedule.Items.Add("");
                 }
             }
+<<<<<<< HEAD
             catch (HttpRequestException ex)
             {
                 Console.WriteLine($"HTTP ошибка: {ex.Message}");
                 ShowErrorInListBox($"Ошибка подключения: {ex.Message}\n\nПроверьте, запущен ли сервер:\n{AppConfig.BaseUrl}");
                 statusLabel.Text = "Нет подключения к серверу";
             }
+=======
+>>>>>>> master
             catch (Exception ex)
             {
-                Console.WriteLine($"Общая ошибка: {ex.Message}\n{ex.StackTrace}");
-                ShowErrorInListBox($"Ошибка: {ex.Message}");
-                statusLabel.Text = "Ошибка загрузки";
-            }
-            finally
-            {
-                isLoading = false;
-                SetControlsEnabled(true);
+                MessageBox.Show("Ошибка связи с сервером:\n" + ex.Message);
             }
         }
 
+<<<<<<< HEAD
         private void DisplaySchedule(string groupName, int dayIndex, bool isNumerator, List<Lesson> lessons)
         {
             listSchedule.Items.Clear();
@@ -446,24 +464,46 @@ namespace ScheduleClient
             listSchedule.Items.Add("   2. Убедиться, что сервер запущен");
         }
 
+=======
+        // Простой расчёт номера недели с 1 сентября
+>>>>>>> master
         private int GetWeekNumber(DateTime date)
         {
-            // Простой расчет номера недели от 1 сентября
             DateTime start = new DateTime(date.Year, 9, 1);
             if (date < start) start = start.AddYears(-1);
             return (int)((date - start).TotalDays / 7) + 1;
         }
 
-        private void BtnAdmin_Click(object sender, EventArgs e)
+        private void btnAdmin_Click(object sender, EventArgs e)
         {
-            using (var passwordForm = new PasswordForm())
+            string password = "12345"; // ← твой пароль
+
+            using (var form = new Form())
             {
-                if (passwordForm.ShowDialog() == DialogResult.OK)
+                form.Text = "Требуется пароль";
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+                form.Size = new System.Drawing.Size(300, 150);
+
+                var label = new Label() { Left = 20, Top = 20, Width = 250, Text = "Введите пароль:" };
+                var textBox = new TextBox() { Left = 20, Top = 50, Width = 240 };
+                textBox.UseSystemPasswordChar = true; // скрывает символы
+                var buttonOk = new Button() { Text = "ОК", Left = 170, Width = 80, Top = 85, DialogResult = DialogResult.OK };
+
+                buttonOk.Click += (s, ev) => form.Close();
+
+                form.Controls.Add(label);
+                form.Controls.Add(textBox);
+                form.Controls.Add(buttonOk);
+                form.AcceptButton = buttonOk;
+
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    if (passwordForm.PasswordCorrect)
+                    if (textBox.Text == password)
                     {
-                        var adminForm = new AdminForm();
-                        adminForm.ShowDialog();
+                        new AdminForm().ShowDialog();
                     }
                     else
                     {
@@ -475,86 +515,5 @@ namespace ScheduleClient
         }
     }
 
-    // Класс формы для ввода пароля (оставляем как было)
-    public class PasswordForm : Form
-    {
-        private TextBox txtPassword;
-        private Button btnOk;
-        private Button btnCancel;
-        public bool PasswordCorrect { get; private set; } = false;
-        private const string CorrectPassword = "12345";
-
-        public PasswordForm()
-        {
-            InitializeComponent();
-        }
-
-        private void InitializeComponent()
-        {
-            this.Text = "Аутентификация администратора";
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Size = new Size(350, 180);
-            this.BackColor = SystemColors.Control;
-
-            var lblTitle = new Label
-            {
-                Text = "Введите пароль администратора",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Location = new Point(20, 20),
-                Size = new Size(300, 25)
-            };
-
-            txtPassword = new TextBox
-            {
-                Location = new Point(20, 60),
-                Size = new Size(290, 25),
-                PasswordChar = '*',
-                Font = new Font("Segoe UI", 10)
-            };
-
-            btnOk = new Button
-            {
-                Text = "ОК",
-                Location = new Point(150, 100),
-                Size = new Size(80, 30),
-                DialogResult = DialogResult.OK
-            };
-
-            btnCancel = new Button
-            {
-                Text = "Отмена",
-                Location = new Point(240, 100),
-                Size = new Size(80, 30),
-                DialogResult = DialogResult.Cancel
-            };
-
-            btnOk.Click += BtnOk_Click;
-            txtPassword.KeyPress += TxtPassword_KeyPress;
-
-            this.Controls.Add(lblTitle);
-            this.Controls.Add(txtPassword);
-            this.Controls.Add(btnOk);
-            this.Controls.Add(btnCancel);
-            this.AcceptButton = btnOk;
-            this.CancelButton = btnCancel;
-        }
-
-        private void BtnOk_Click(object sender, EventArgs e)
-        {
-            PasswordCorrect = (txtPassword.Text == CorrectPassword);
-        }
-
-        private void TxtPassword_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Enter)
-            {
-                BtnOk_Click(sender, e);
-                if (PasswordCorrect)
-                    this.DialogResult = DialogResult.OK;
-            }
-        }
-    }
+   
 }

@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ScheduleClient
+﻿namespace ScheduleClient
 {
     public class Group
     {
@@ -11,29 +9,6 @@ namespace ScheduleClient
     public class Lesson
     {
         public int Id { get; set; }
-
-        [JsonPropertyName("groupId")]
-        public int GroupId { get; set; }
-
-        [JsonPropertyName("dayOfWeek")]
-        public int DayOfWeek { get; set; }
-
-        [JsonPropertyName("isNumerator")]
-        public bool IsNumerator { get; set; }
-
-        public string Time { get; set; }
-        public string Subject { get; set; }
-        public string Teacher { get; set; }
-        public string Room { get; set; }
-
-        // Навигационное свойство (опционально)
-        [JsonPropertyName("group")]
-        public Group Group { get; set; }
-    }
-
-    // DTO для создания занятия - ОСНОВНОЙ для отправки на сервер
-    public class CreateLessonDto
-    {
         public int GroupId { get; set; }
         public int DayOfWeek { get; set; }
         public bool IsNumerator { get; set; }

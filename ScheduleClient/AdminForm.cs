@@ -1,14 +1,9 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ScheduleClient
@@ -19,6 +14,7 @@ namespace ScheduleClient
         private List<Group> groups;
         private List<Lesson> lessons;
 
+<<<<<<< HEAD
 
         // Временные периоды для выпадающего списка
         private readonly string[] timePeriods = AppConfig.TimePeriods;
@@ -27,17 +23,22 @@ namespace ScheduleClient
         private readonly ToolTip toolTip = new ToolTip();
         private bool isDataLoading = false;
 
+=======
+>>>>>>> master
         public AdminForm()
         {
             InitializeComponent();
-
             http = new HttpClient();
+<<<<<<< HEAD
             http.Timeout = AppConfig.HttpTimeout;
+=======
+>>>>>>> master
             groups = new List<Group>();
             lessons = new List<Lesson>();
-
+            InitializeComponent();
             this.Text = "Администрирование расписания";
             this.StartPosition = FormStartPosition.CenterScreen;
+<<<<<<< HEAD
             this.Size = new Size(1100, 750);
             this.FormClosing += AdminForm_FormClosing;
 
@@ -150,28 +151,17 @@ namespace ScheduleClient
         {
             http.Dispose();
             toolTip.Dispose();
+=======
+            this.Size = new System.Drawing.Size(1000, 700);
+>>>>>>> master
         }
 
         private async void AdminForm_Load(object sender, EventArgs e)
         {
-            // Заполняем предопределенные значения
-            InitializePredefinedValues();
-
-            // Показываем индикатор загрузки
-            isDataLoading = true;
-            SetControlsEnabled(false);
-
-            try
-            {
-                await LoadData();
-            }
-            finally
-            {
-                isDataLoading = false;
-                SetControlsEnabled(true);
-            }
+            await LoadData();
         }
 
+<<<<<<< HEAD
         private void SetControlsEnabled(bool enabled)
         {
             tabControl1.Enabled = enabled;
@@ -194,33 +184,32 @@ namespace ScheduleClient
         }
 
         private async Task LoadData()
+=======
+        private async System.Threading.Tasks.Task LoadData()
+>>>>>>> master
         {
             try
             {
-                Cursor = Cursors.WaitCursor;
-                statusLabel.Text = "Загрузка данных...";
-                Console.WriteLine("Начинаю загрузку данных...");
+                groups = await http.GetFromJsonAsync<List<Group>>("https://localhost:7233/api/groups") ?? new List<Group>();
+                lessons = await http.GetFromJsonAsync<List<Lesson>>("https://localhost:7233/api/schedule/all") ?? new List<Lesson>();
 
+<<<<<<< HEAD
                 // Загружаем группы
                 var groupsResponse = await http.GetAsync($"{AppConfig.BaseUrl}/api/groups");
                 Console.WriteLine($"Статус загрузки групп: {groupsResponse.StatusCode}");
+=======
+                lstGroups.Items.Clear();
+                foreach (var g in groups) lstGroups.Items.Add(g.Name);
+>>>>>>> master
 
-                if (groupsResponse.IsSuccessStatusCode)
-                {
-                    var groupsString = await groupsResponse.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ответ групп: {groupsString.Substring(0, Math.Min(groupsString.Length, 200))}...");
+                cmbAdminGroup.Items.Clear();
+                foreach (var g in groups) cmbAdminGroup.Items.Add(g.Name);
 
-                    groups = await groupsResponse.Content.ReadFromJsonAsync<List<Group>>() ?? new List<Group>();
-                    Console.WriteLine($"Загружено {groups.Count} групп");
-                }
-                else
-                {
-                    var error = await groupsResponse.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ошибка загрузки групп: {error}");
-                    ShowError("Ошибка загрузки групп", error);
-                    groups = new List<Group>();
-                }
+                string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
+                cmbAdminDay.Items.Clear();
+                cmbAdminDay.Items.AddRange(days);
 
+<<<<<<< HEAD
                 // Загружаем занятия
                 var lessonsResponse = await http.GetAsync($"{AppConfig.BaseUrl}/api/schedule/all");
                 Console.WriteLine($"Статус загрузки занятий: {lessonsResponse.StatusCode}");
@@ -264,12 +253,15 @@ namespace ScheduleClient
                 string errorMsg = $"Ошибка подключения к серверу.\nУбедитесь, что сервер запущен по адресу: {AppConfig.BaseUrl}\n\nДетали: {ex.Message}";
                 Console.WriteLine($"HTTP ошибка: {errorMsg}");
                 ShowError("Ошибка подключения к серверу", errorMsg);
+=======
+                RefreshLessonsGrid();
+>>>>>>> master
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Общая ошибка: {ex.Message}\n{ex.StackTrace}");
-                ShowError("Ошибка загрузки данных", ex.Message);
+                MessageBox.Show("Сервер не запущен или ошибка подключения:\n" + ex.Message);
             }
+<<<<<<< HEAD
             finally
             {
                 Cursor = Cursors.Default;
@@ -308,22 +300,20 @@ namespace ScheduleClient
 
             // Автоматически фильтруем таблицу после обновления списка групп
             FilterLessonsGrid();
+=======
+>>>>>>> master
         }
 
         private void RefreshLessonsGrid()
         {
             dgvLessons.Rows.Clear();
-            string[] russianDays = { "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота" };
-
             foreach (var l in lessons.OrderBy(x => x.GroupId).ThenBy(x => x.DayOfWeek).ThenBy(x => x.Time))
             {
                 string groupName = groups.FirstOrDefault(g => g.Id == l.GroupId)?.Name ?? "—";
-
-                int dayIndex = l.DayOfWeek;
-                string dayName = (dayIndex >= 0 && dayIndex <= 6) ? russianDays[dayIndex] : $"День {dayIndex}";
-
+                string dayName = ((DayOfWeek)l.DayOfWeek).ToString();
                 string week = l.IsNumerator ? "Числитель" : "Знаменатель";
 
+<<<<<<< HEAD
                 dgvLessons.Rows.Add(
                     groupName,     // colGroup
                     dayName,       // colDay  
@@ -456,19 +446,21 @@ namespace ScheduleClient
             {
                 Cursor = Cursors.Default;
                 statusLabel.Text = "Готово";
+=======
+                dgvLessons.Rows.Add(groupName, dayName, week, l.Time, l.Subject, l.Teacher, l.Room, l.Id, "Удалить");
+>>>>>>> master
             }
         }
 
-        private async void btnDeleteGroup_Click(object sender, EventArgs e)
+        private async void btnAddGroup_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Нажата кнопка 'Удалить группу'");
-
-            if (lstGroups.SelectedItem == null)
+            if (string.IsNullOrWhiteSpace(txtGroupName.Text))
             {
-                ShowWarning("Выберите группу для удаления");
+                MessageBox.Show("Введите название группы");
                 return;
             }
 
+<<<<<<< HEAD
             var selectedText = lstGroups.SelectedItem.ToString();
             var groupName = selectedText.Split('(')[0].Trim();
 
@@ -557,6 +549,11 @@ namespace ScheduleClient
 
             // Фильтруем таблицу
             FilterLessonsGrid();
+=======
+            await http.PostAsJsonAsync("https://localhost:7233/api/groups", new { name = txtGroupName.Text.Trim() });
+            txtGroupName.Clear();
+            await LoadData();
+>>>>>>> master
         }
         private void CmbGroupForLesson_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -571,49 +568,28 @@ namespace ScheduleClient
 
         private async void btnAddLesson_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Нажата кнопка 'Добавить пару'");
-
-            // Валидация полей
-            if (!ValidateLessonFields())
-                return;
-
-            // Получаем выбранную группу
-            string selectedGroupName = cmbGroupForLesson.SelectedItem?.ToString();
-            if (string.IsNullOrEmpty(selectedGroupName) || selectedGroupName == "-- Выберите группу --")
+            if (cmbAdminGroup.SelectedItem == null || cmbAdminDay.SelectedItem == null || string.IsNullOrWhiteSpace(txtTime.Text))
             {
-                ShowWarning("Сначала выберите группу из списка");
-                cmbGroupForLesson.Focus();
+                MessageBox.Show("Заполните все поля: группа, день, время");
                 return;
             }
 
-            var group = groups.FirstOrDefault(g => g.Name == selectedGroupName);
-            if (group == null)
-            {
-                ShowError("Группа не найдена", "Выбранная группа не найдена в базе данных. Попробуйте обновить список.");
-                return;
-            }
+            var group = groups.First(g => g.Name == cmbAdminGroup.SelectedItem.ToString());
 
-            // Преобразование дня недели
-            int dayIndex = cmbAdminDay.SelectedIndex; // 0=Понедельник, 6=Воскресенье
-            int dayOfWeekValue = (dayIndex == 6) ? 0 : dayIndex + 1; // 0=Воскресенье, 1=Понедельник
-
-            // Создаем DTO для отправки (ВАЖНО!)
-            var lessonDto = new CreateLessonDto
+            var lesson = new Lesson
             {
                 GroupId = group.Id,
-                DayOfWeek = dayOfWeekValue,
+                DayOfWeek = cmbAdminDay.SelectedIndex,
                 IsNumerator = rbAdminNum.Checked,
-                Time = cmbTime.SelectedItem?.ToString() ?? cmbTime.Text,
+                Time = txtTime.Text.Trim(),
                 Subject = txtSubject.Text.Trim(),
                 Teacher = txtTeacher.Text.Trim(),
                 Room = txtRoom.Text.Trim()
             };
 
-            try
-            {
-                Cursor = Cursors.WaitCursor;
-                statusLabel.Text = "Добавление занятия...";
+            await http.PostAsJsonAsync("https://localhost:7233/api/schedule", lesson);
 
+<<<<<<< HEAD
                 // Логируем отправляемые данные для отладки
                 Console.WriteLine($"Отправка занятия: Группа={group.Name}(ID:{group.Id}), День={dayOfWeekValue}, Время={lessonDto.Time}");
                 Console.WriteLine($"JSON: {System.Text.Json.JsonSerializer.Serialize(lessonDto)}");
@@ -809,17 +785,24 @@ namespace ScheduleClient
                 var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/{id}");
 
                 if (response.IsSuccessStatusCode)
+=======
+            txtTime.Clear(); txtSubject.Clear(); txtTeacher.Clear(); txtRoom.Clear();
+            await LoadData();
+        }
+
+        private async void dgvLessons_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == 8 && e.RowIndex >= 0) // колонка "Удалить"
+            {
+                if (MessageBox.Show("Удалить пару?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
+>>>>>>> master
                 {
+                    int id = (int)dgvLessons.Rows[e.RowIndex].Cells[7].Value;
+                    await http.DeleteAsync($"https://localhost:7233/api/schedule/{id}");
                     await LoadData();
-                    ShowSuccess("Занятие успешно удалено");
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ошибка удаления: {error}");
-                    ShowError("Ошибка удаления", error);
                 }
             }
+<<<<<<< HEAD
             catch (Exception ex)
             {
                 Console.WriteLine($"Исключение при удалении: {ex.Message}");
@@ -1050,6 +1033,8 @@ namespace ScheduleClient
         {
             Console.WriteLine("Нажата кнопка 'Обновить'");
             await LoadData();
+=======
+>>>>>>> master
         }
 
         private void AdminForm_Load_1(object sender, EventArgs e)

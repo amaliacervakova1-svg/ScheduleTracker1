@@ -127,6 +127,10 @@
             this.btnAdmin.TabIndex = 9;
             this.btnAdmin.Text = "Администрирование";
             this.btnAdmin.UseVisualStyleBackColor = true;
+<<<<<<< HEAD
+=======
+            this.btnAdmin.Click += new System.EventHandler(this.btnAdmin_Click);
+>>>>>>> master
             // 
             // Form1
             // 
@@ -159,6 +163,6 @@
         private System.Windows.Forms.RadioButton rbDenominator;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnAdmin;
-        private System.Windows.Forms.Button btnRefresh;
     }
 }
+

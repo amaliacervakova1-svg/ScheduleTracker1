@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGroups = new System.Windows.Forms.TabPage();
             this.lblGroupsInfo = new System.Windows.Forms.Label();
@@ -246,9 +246,9 @@
             // 
             // btnDeleteLesson
             // 
-            this.btnDeleteLesson.Location = new System.Drawing.Point(39, 363);
+            this.btnDeleteLesson.Location = new System.Drawing.Point(39, 353);
             this.btnDeleteLesson.Name = "btnDeleteLesson";
-            this.btnDeleteLesson.Size = new System.Drawing.Size(110, 40);
+            this.btnDeleteLesson.Size = new System.Drawing.Size(110, 58);
             this.btnDeleteLesson.TabIndex = 17;
             this.btnDeleteLesson.Text = "Удалить выбранную пару";
             this.btnDeleteLesson.UseVisualStyleBackColor = true;
@@ -257,8 +257,8 @@
             // 
             this.dgvLessons.AllowUserToAddRows = false;
             this.dgvLessons.AllowUserToDeleteRows = false;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
-            this.dgvLessons.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
+            this.dgvLessons.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
             this.dgvLessons.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvLessons.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colGroup,

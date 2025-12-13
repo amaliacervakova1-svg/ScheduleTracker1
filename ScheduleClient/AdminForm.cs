@@ -276,6 +276,12 @@ namespace ScheduleClient
                 UpdateGroupSelectionForLessons();
                 RefreshLessonsGrid();
 
+                if (dgvLessons.Columns.Count > 1)
+                {
+                    // Скрываем предпоследний столбец — это столбец с Id
+                    dgvLessons.Columns[dgvLessons.Columns.Count - 2].Visible = false;
+                }
+
                 statusLabel.Text = $"Загружено: {groups.Count} групп, {lessons.Count} занятий";
                 Console.WriteLine("Загрузка данных завершена успешно");
             }
@@ -728,25 +734,54 @@ namespace ScheduleClient
 
         private async void btnDeleteLesson_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Нажата кнопка 'Удалить пару'");
-
             if (dgvLessons.SelectedRows.Count == 0)
             {
-                ShowWarning("Выберите занятие для удаления");
+                MessageBox.Show("Выберите пару для удаления в таблице");
                 return;
             }
 
-            var selectedRow = dgvLessons.SelectedRows[0];
-            int id = Convert.ToInt32(selectedRow.Cells["Id"].Value);
-            string groupName = selectedRow.Cells["Group"].Value?.ToString() ?? "неизвестная";
-            string subject = selectedRow.Cells["Subject"].Value?.ToString() ?? "неизвестный";
+            DataGridViewRow selectedRow = dgvLessons.SelectedRows[0];
 
-            var result = MessageBox.Show($"Удалить занятие?\n\nГруппа: {groupName}\nПредмет: {subject}",
-                "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            // Id урока — в предпоследнем столбце (индекс Columns.Count - 2)
+            object idObj = selectedRow.Cells[dgvLessons.Columns.Count - 2].Value;
 
-            if (result == DialogResult.Yes)
+            if (idObj == null || !int.TryParse(idObj.ToString(), out int lessonId))
             {
-                await DeleteLesson(id);
+                MessageBox.Show("Не удалось получить ID выбранной пары");
+                return;
+            }
+
+            string groupName = selectedRow.Cells[0].Value?.ToString() ?? "неизвестно";
+            string subject = selectedRow.Cells[4].Value?.ToString() ?? "неизвестно";
+
+            if (MessageBox.Show($"Удалить пару?\nГруппа: {groupName}\nПредмет: {subject}",
+                "Подтверждение удаления", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    var response = await http.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Пара успешно удалена!");
+                        try
+                        {
+                            await LoadData(); // пробуем обновить
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Не удалось обновить данные после удаления. Попробуйте нажать \"Обновить\" вручную.\nОшибка: " + ex.Message);
+                            // Можно добавить кнопку "Обновить" на форму, если хочешь
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Ошибка удаления на сервере");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка: " + ex.Message);
+                }
             }
         }
 
@@ -754,40 +789,22 @@ namespace ScheduleClient
         {
             if (e.RowIndex < 0) return;
 
-            // Проверяем, кликнули ли по последнему столбцу (где "Удалить" или кнопка)
-            if (e.ColumnIndex == dgvLessons.Columns.Count - 1) // последний столбец
+            // Клик по последнему столбцу ("Удалить")
+            if (e.ColumnIndex == dgvLessons.Columns.Count - 1)
             {
-                // Id урока — в предпоследнем столбце (индекс Columns.Count - 2)
-                object idObj = dgvLessons.Rows[e.RowIndex].Cells[dgvLessons.Columns.Count - 2].Value;
-                if (idObj == null || !int.TryParse(idObj.ToString(), out int lessonId))
+                // Id — в предпоследнем столбце
+                var idCell = dgvLessons.Rows[e.RowIndex].Cells[dgvLessons.Columns.Count - 2].Value;
+
+                if (idCell == null || !int.TryParse(idCell.ToString(), out int lessonId))
                 {
-                    MessageBox.Show("Не удалось получить ID пары");
+                    MessageBox.Show("Не удалось получить ID");
                     return;
                 }
 
-                string groupName = dgvLessons.Rows[e.RowIndex].Cells[0].Value?.ToString() ?? "неизвестно";
-                string subject = dgvLessons.Rows[e.RowIndex].Cells[4].Value?.ToString() ?? "неизвестно";
-
-                if (MessageBox.Show($"Удалить пару?\nГруппа: {groupName}\nПредмет: {subject}",
-                    "Подтверждение", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (MessageBox.Show("Удалить эту пару?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    try
-                    {
-                        var response = await http.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
-                        if (response.IsSuccessStatusCode)
-                        {
-                            MessageBox.Show("Пара удалена!");
-                            await LoadData(); // обновляем таблицу
-                        }
-                        else
-                        {
-                            MessageBox.Show("Ошибка удаления на сервере");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Ошибка: " + ex.Message);
-                    }
+                    await http.DeleteAsync($"https://localhost:7233/api/schedule/{lessonId}");
+                    await LoadData(); // обновляем таблицу
                 }
             }
         }

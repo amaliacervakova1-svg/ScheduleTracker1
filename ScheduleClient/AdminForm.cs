@@ -1,9 +1,14 @@
-﻿
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ScheduleClient
@@ -14,31 +19,35 @@ namespace ScheduleClient
         private List<Group> groups;
         private List<Lesson> lessons;
 
-<<<<<<< HEAD
+        private const string BaseUrl = "http://localhost:5032";
 
         // Временные периоды для выпадающего списка
-        private readonly string[] timePeriods = AppConfig.TimePeriods;
+        private readonly string[] timePeriods =
+        {
+            "08:30–10:05",
+            "10:15–11:50",
+            "12:00–13:35",
+            "14:00–15:35",
+            "15:45–17:20",
+            "17:30–19:05",
+            "19:15–20:50"
+        };
 
         // Для хранения подсказок
         private readonly ToolTip toolTip = new ToolTip();
         private bool isDataLoading = false;
 
-=======
->>>>>>> master
         public AdminForm()
         {
             InitializeComponent();
+
             http = new HttpClient();
-<<<<<<< HEAD
-            http.Timeout = AppConfig.HttpTimeout;
-=======
->>>>>>> master
+            http.Timeout = TimeSpan.FromSeconds(30);
             groups = new List<Group>();
             lessons = new List<Lesson>();
-            InitializeComponent();
+
             this.Text = "Администрирование расписания";
             this.StartPosition = FormStartPosition.CenterScreen;
-<<<<<<< HEAD
             this.Size = new Size(1100, 750);
             this.FormClosing += AdminForm_FormClosing;
 
@@ -151,17 +160,28 @@ namespace ScheduleClient
         {
             http.Dispose();
             toolTip.Dispose();
-=======
-            this.Size = new System.Drawing.Size(1000, 700);
->>>>>>> master
         }
 
         private async void AdminForm_Load(object sender, EventArgs e)
         {
-            await LoadData();
+            // Заполняем предопределенные значения
+            InitializePredefinedValues();
+
+            // Показываем индикатор загрузки
+            isDataLoading = true;
+            SetControlsEnabled(false);
+
+            try
+            {
+                await LoadData();
+            }
+            finally
+            {
+                isDataLoading = false;
+                SetControlsEnabled(true);
+            }
         }
 
-<<<<<<< HEAD
         private void SetControlsEnabled(bool enabled)
         {
             tabControl1.Enabled = enabled;
@@ -176,7 +196,7 @@ namespace ScheduleClient
             // Заполняем дни недели в расписании
             string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
             cmbAdminDay.Items.Clear();
-            cmbAdminDay.Items.AddRange(AppConfig.DaysOfWeek);
+            cmbAdminDay.Items.AddRange(days);
             cmbAdminDay.SelectedIndex = 0;
 
             // Выбираем числитель по умолчанию
@@ -184,34 +204,35 @@ namespace ScheduleClient
         }
 
         private async Task LoadData()
-=======
-        private async System.Threading.Tasks.Task LoadData()
->>>>>>> master
         {
             try
             {
-                groups = await http.GetFromJsonAsync<List<Group>>("https://localhost:7233/api/groups") ?? new List<Group>();
-                lessons = await http.GetFromJsonAsync<List<Lesson>>("https://localhost:7233/api/schedule/all") ?? new List<Lesson>();
+                Cursor = Cursors.WaitCursor;
+                statusLabel.Text = "Загрузка данных...";
+                Console.WriteLine("Начинаю загрузку данных...");
 
-<<<<<<< HEAD
                 // Загружаем группы
-                var groupsResponse = await http.GetAsync($"{AppConfig.BaseUrl}/api/groups");
+                var groupsResponse = await http.GetAsync($"{BaseUrl}/api/groups");
                 Console.WriteLine($"Статус загрузки групп: {groupsResponse.StatusCode}");
-=======
-                lstGroups.Items.Clear();
-                foreach (var g in groups) lstGroups.Items.Add(g.Name);
->>>>>>> master
 
-                cmbAdminGroup.Items.Clear();
-                foreach (var g in groups) cmbAdminGroup.Items.Add(g.Name);
+                if (groupsResponse.IsSuccessStatusCode)
+                {
+                    var groupsString = await groupsResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Ответ групп: {groupsString.Substring(0, Math.Min(groupsString.Length, 200))}...");
 
-                string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
-                cmbAdminDay.Items.Clear();
-                cmbAdminDay.Items.AddRange(days);
+                    groups = await groupsResponse.Content.ReadFromJsonAsync<List<Group>>() ?? new List<Group>();
+                    Console.WriteLine($"Загружено {groups.Count} групп");
+                }
+                else
+                {
+                    var error = await groupsResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Ошибка загрузки групп: {error}");
+                    ShowError("Ошибка загрузки групп", error);
+                    groups = new List<Group>();
+                }
 
-<<<<<<< HEAD
                 // Загружаем занятия
-                var lessonsResponse = await http.GetAsync($"{AppConfig.BaseUrl}/api/schedule/all");
+                var lessonsResponse = await http.GetAsync($"{BaseUrl}/api/schedule/all");
                 Console.WriteLine($"Статус загрузки занятий: {lessonsResponse.StatusCode}");
 
                 if (lessonsResponse.IsSuccessStatusCode)
@@ -241,7 +262,7 @@ namespace ScheduleClient
 
                 // Обновляем UI
                 UpdateGroupsList();
-                UpdateDirectionsListFromDatabase();
+                UpdateDirectionsListFromDatabase(); // <-- ВМЕСТО InitializePredefinedValues()
                 UpdateGroupSelectionForLessons();
                 FilterLessonsGrid();
 
@@ -250,18 +271,15 @@ namespace ScheduleClient
             }
             catch (HttpRequestException ex)
             {
-                string errorMsg = $"Ошибка подключения к серверу.\nУбедитесь, что сервер запущен по адресу: {AppConfig.BaseUrl}\n\nДетали: {ex.Message}";
+                string errorMsg = $"Ошибка подключения к серверу.\nУбедитесь, что сервер запущен по адресу: {BaseUrl}\n\nДетали: {ex.Message}";
                 Console.WriteLine($"HTTP ошибка: {errorMsg}");
                 ShowError("Ошибка подключения к серверу", errorMsg);
-=======
-                RefreshLessonsGrid();
->>>>>>> master
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Сервер не запущен или ошибка подключения:\n" + ex.Message);
+                Console.WriteLine($"Общая ошибка: {ex.Message}\n{ex.StackTrace}");
+                ShowError("Ошибка загрузки данных", ex.Message);
             }
-<<<<<<< HEAD
             finally
             {
                 Cursor = Cursors.Default;
@@ -300,20 +318,22 @@ namespace ScheduleClient
 
             // Автоматически фильтруем таблицу после обновления списка групп
             FilterLessonsGrid();
-=======
->>>>>>> master
         }
 
         private void RefreshLessonsGrid()
         {
             dgvLessons.Rows.Clear();
+            string[] russianDays = { "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота" };
+
             foreach (var l in lessons.OrderBy(x => x.GroupId).ThenBy(x => x.DayOfWeek).ThenBy(x => x.Time))
             {
                 string groupName = groups.FirstOrDefault(g => g.Id == l.GroupId)?.Name ?? "—";
-                string dayName = ((DayOfWeek)l.DayOfWeek).ToString();
+
+                int dayIndex = l.DayOfWeek;
+                string dayName = (dayIndex >= 0 && dayIndex <= 6) ? russianDays[dayIndex] : $"День {dayIndex}";
+
                 string week = l.IsNumerator ? "Числитель" : "Знаменатель";
 
-<<<<<<< HEAD
                 dgvLessons.Rows.Add(
                     groupName,     // colGroup
                     dayName,       // colDay  
@@ -392,7 +412,7 @@ namespace ScheduleClient
                 Console.WriteLine($"Отправка запроса на создание группы: {groupName}");
 
                 var group = new Group { Name = groupName };
-                var response = await http.PostAsJsonAsync($"{AppConfig.BaseUrl}/api/groups", group);
+                var response = await http.PostAsJsonAsync($"{BaseUrl}/api/groups", group);
 
                 Console.WriteLine($"Ответ сервера: {response.StatusCode}");
 
@@ -446,21 +466,19 @@ namespace ScheduleClient
             {
                 Cursor = Cursors.Default;
                 statusLabel.Text = "Готово";
-=======
-                dgvLessons.Rows.Add(groupName, dayName, week, l.Time, l.Subject, l.Teacher, l.Room, l.Id, "Удалить");
->>>>>>> master
             }
         }
 
-        private async void btnAddGroup_Click(object sender, EventArgs e)
+        private async void btnDeleteGroup_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtGroupName.Text))
+            Console.WriteLine("Нажата кнопка 'Удалить группу'");
+
+            if (lstGroups.SelectedItem == null)
             {
-                MessageBox.Show("Введите название группы");
+                ShowWarning("Выберите группу для удаления");
                 return;
             }
 
-<<<<<<< HEAD
             var selectedText = lstGroups.SelectedItem.ToString();
             var groupName = selectedText.Split('(')[0].Trim();
 
@@ -497,7 +515,7 @@ namespace ScheduleClient
 
                     // Сначала удаляем все занятия группы
                     Console.WriteLine($"Удаление занятий группы ID: {groupId}");
-                    var deleteLessonsResponse = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/group/{groupId}");
+                    var deleteLessonsResponse = await http.DeleteAsync($"{BaseUrl}/api/schedule/group/{groupId}");
 
                     if (!deleteLessonsResponse.IsSuccessStatusCode)
                     {
@@ -509,7 +527,7 @@ namespace ScheduleClient
 
                     // Затем удаляем саму группу
                     Console.WriteLine($"Удаление группы ID: {groupId}");
-                    var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/groups/{groupId}");
+                    var response = await http.DeleteAsync($"{BaseUrl}/api/groups/{groupId}");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -549,11 +567,6 @@ namespace ScheduleClient
 
             // Фильтруем таблицу
             FilterLessonsGrid();
-=======
-            await http.PostAsJsonAsync("https://localhost:7233/api/groups", new { name = txtGroupName.Text.Trim() });
-            txtGroupName.Clear();
-            await LoadData();
->>>>>>> master
         }
         private void CmbGroupForLesson_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -568,34 +581,55 @@ namespace ScheduleClient
 
         private async void btnAddLesson_Click(object sender, EventArgs e)
         {
-            if (cmbAdminGroup.SelectedItem == null || cmbAdminDay.SelectedItem == null || string.IsNullOrWhiteSpace(txtTime.Text))
+            Console.WriteLine("Нажата кнопка 'Добавить пару'");
+
+            // Валидация полей
+            if (!ValidateLessonFields())
+                return;
+
+            // Получаем выбранную группу
+            string selectedGroupName = cmbGroupForLesson.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedGroupName) || selectedGroupName == "-- Выберите группу --")
             {
-                MessageBox.Show("Заполните все поля: группа, день, время");
+                ShowWarning("Сначала выберите группу из списка");
+                cmbGroupForLesson.Focus();
                 return;
             }
 
-            var group = groups.First(g => g.Name == cmbAdminGroup.SelectedItem.ToString());
+            var group = groups.FirstOrDefault(g => g.Name == selectedGroupName);
+            if (group == null)
+            {
+                ShowError("Группа не найдена", "Выбранная группа не найдена в базе данных. Попробуйте обновить список.");
+                return;
+            }
 
-            var lesson = new Lesson
+            // Преобразование дня недели
+            int dayIndex = cmbAdminDay.SelectedIndex; // 0=Понедельник, 6=Воскресенье
+            int dayOfWeekValue = (dayIndex == 6) ? 0 : dayIndex + 1; // 0=Воскресенье, 1=Понедельник
+
+            // Создаем DTO для отправки (ВАЖНО!)
+            var lessonDto = new CreateLessonDto
             {
                 GroupId = group.Id,
-                DayOfWeek = cmbAdminDay.SelectedIndex,
+                DayOfWeek = dayOfWeekValue,
                 IsNumerator = rbAdminNum.Checked,
-                Time = txtTime.Text.Trim(),
+                Time = cmbTime.SelectedItem?.ToString() ?? cmbTime.Text,
                 Subject = txtSubject.Text.Trim(),
                 Teacher = txtTeacher.Text.Trim(),
                 Room = txtRoom.Text.Trim()
             };
 
-            await http.PostAsJsonAsync("https://localhost:7233/api/schedule", lesson);
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                statusLabel.Text = "Добавление занятия...";
 
-<<<<<<< HEAD
                 // Логируем отправляемые данные для отладки
                 Console.WriteLine($"Отправка занятия: Группа={group.Name}(ID:{group.Id}), День={dayOfWeekValue}, Время={lessonDto.Time}");
                 Console.WriteLine($"JSON: {System.Text.Json.JsonSerializer.Serialize(lessonDto)}");
 
                 // Отправляем DTO, а не Lesson
-                var response = await http.PostAsJsonAsync($"{AppConfig.BaseUrl}/api/schedule", lessonDto);
+                var response = await http.PostAsJsonAsync($"{BaseUrl}/api/schedule", lessonDto);
 
                 Console.WriteLine($"Ответ сервера: {response.StatusCode}");
 
@@ -622,7 +656,7 @@ namespace ScheduleClient
             catch (HttpRequestException ex)
             {
                 Console.WriteLine($"HTTP ошибка: {ex.Message}");
-                ShowError("Ошибка подключения", $"Не удалось подключиться к серверу.\nАдрес: {AppConfig.BaseUrl}\n\n{ex.Message}");
+                ShowError("Ошибка подключения", $"Не удалось подключиться к серверу.\nАдрес: {BaseUrl}\n\n{ex.Message}");
             }
             catch (Exception ex)
             {
@@ -722,7 +756,7 @@ namespace ScheduleClient
             }
 
             Console.WriteLine($"Удаление занятия ID: {lessonId}");
-            Console.WriteLine($"URL запроса: {AppConfig.BaseUrl}/api/schedule/{lessonId}");
+            Console.WriteLine($"URL запроса: {BaseUrl}/api/schedule/{lessonId}");
 
             if (MessageBox.Show($"Удалить эту пару из расписания?\n\nID: {lessonId}",
                 "Подтверждение удаления",
@@ -734,7 +768,7 @@ namespace ScheduleClient
                     statusLabel.Text = "Удаление занятия...";
 
                     // Используем основной HttpClient
-                    var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/{lessonId}");
+                    var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/{lessonId}");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -760,7 +794,7 @@ namespace ScheduleClient
                 {
                     Console.WriteLine($"HTTP ошибка: {ex.Message}");
                     ShowError("Ошибка подключения",
-                        $"Не удалось подключиться к серверу.\nАдрес: {AppConfig.BaseUrl}\n\nДетали: {ex.Message}");
+                        $"Не удалось подключиться к серверу.\nАдрес: {BaseUrl}\n\nДетали: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -782,27 +816,20 @@ namespace ScheduleClient
                 Cursor = Cursors.WaitCursor;
                 Console.WriteLine($"Удаление занятия ID: {id}");
 
-                var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/{id}");
+                var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/{id}");
 
                 if (response.IsSuccessStatusCode)
-=======
-            txtTime.Clear(); txtSubject.Clear(); txtTeacher.Clear(); txtRoom.Clear();
-            await LoadData();
-        }
-
-        private async void dgvLessons_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.ColumnIndex == 8 && e.RowIndex >= 0) // колонка "Удалить"
-            {
-                if (MessageBox.Show("Удалить пару?", "Подтверждение", MessageBoxButtons.YesNo) == DialogResult.Yes)
->>>>>>> master
                 {
-                    int id = (int)dgvLessons.Rows[e.RowIndex].Cells[7].Value;
-                    await http.DeleteAsync($"https://localhost:7233/api/schedule/{id}");
                     await LoadData();
+                    ShowSuccess("Занятие успешно удалено");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Ошибка удаления: {error}");
+                    ShowError("Ошибка удаления", error);
                 }
             }
-<<<<<<< HEAD
             catch (Exception ex)
             {
                 Console.WriteLine($"Исключение при удалении: {ex.Message}");
@@ -853,7 +880,7 @@ namespace ScheduleClient
                     statusLabel.Text = $"Удаление {lessonCount} занятий...";
                     Console.WriteLine($"Удаление всех занятий группы: {selectedGroupName}");
 
-                    var response = await http.DeleteAsync($"{AppConfig.BaseUrl}/api/schedule/group/{group.Id}");
+                    var response = await http.DeleteAsync($"{BaseUrl}/api/schedule/group/{group.Id}");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -1033,8 +1060,6 @@ namespace ScheduleClient
         {
             Console.WriteLine("Нажата кнопка 'Обновить'");
             await LoadData();
-=======
->>>>>>> master
         }
 
         private void AdminForm_Load_1(object sender, EventArgs e)

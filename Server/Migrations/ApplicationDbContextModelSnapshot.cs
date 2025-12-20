@@ -18,95 +18,95 @@ namespace Server.Migrations
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
             modelBuilder.Entity("Server.Models.Admin", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastLoginAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PasswordHash")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Username")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Admins");
-                });
+                b.ToTable("Admins");
+            });
 
             modelBuilder.Entity("Server.Models.Group", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Groups");
-                });
-
-            modelBuilder.Entity("Server.Models.Lesson", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsNumerator")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Room")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Teacher")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Time")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.ToTable("Lessons");
-                });
+                b.ToTable("Groups");
+            });
 
             modelBuilder.Entity("Server.Models.Lesson", b =>
-                {
-                    b.HasOne("Server.Models.Group", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Navigation("Group");
-                });
+                b.Property<int>("DayOfWeek")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("GroupId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsNumerator")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Room")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Subject")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Teacher")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Time")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.HasKey("Id");
+
+                b.HasIndex("GroupId");
+
+                b.ToTable("Lessons");
+            });
+
+            modelBuilder.Entity("Server.Models.Lesson", b =>
+            {
+                b.HasOne("Server.Models.Group", "Group")
+                    .WithMany()
+                    .HasForeignKey("GroupId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("Group");
+            });
 #pragma warning restore 612, 618
         }
     }

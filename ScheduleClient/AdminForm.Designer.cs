@@ -70,13 +70,15 @@
             this.tabGroups.SuspendLayout();
             this.tabLessons.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvLessons)).BeginInit();
+            this.statusStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabGroups);
             this.tabControl1.Controls.Add(this.tabLessons);
-            this.tabControl1.Location = new System.Drawing.Point(13, 13);
+            this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(1288, 653);
@@ -85,13 +87,16 @@
             // tabGroups
             // 
             this.tabGroups.Controls.Add(this.btnDeleteGroup);
+            this.tabGroups.Controls.Add(this.btnCreateGroupFromParts);
+            this.tabGroups.Controls.Add(this.txtGroupNum);
+            this.tabGroups.Controls.Add(this.lblGroupNum);
+            this.tabGroups.Controls.Add(this.txtDirection);
+            this.tabGroups.Controls.Add(this.lblDirection);
             this.tabGroups.Controls.Add(this.lstGroups);
-            this.tabGroups.Controls.Add(this.btnAddGroup);
-            this.tabGroups.Controls.Add(this.txtGroupName);
             this.tabGroups.Location = new System.Drawing.Point(4, 25);
             this.tabGroups.Name = "tabGroups";
             this.tabGroups.Padding = new System.Windows.Forms.Padding(3);
-            this.tabGroups.Size = new System.Drawing.Size(767, 396);
+            this.tabGroups.Size = new System.Drawing.Size(1048, 571);
             this.tabGroups.TabIndex = 0;
             this.tabGroups.Text = "Группы";
             this.tabGroups.UseVisualStyleBackColor = true;
@@ -168,11 +173,14 @@
             this.tabLessons.Controls.Add(this.txtRoom);
             this.tabLessons.Controls.Add(this.txtTeacher);
             this.tabLessons.Controls.Add(this.txtSubject);
-            this.tabLessons.Controls.Add(this.txtTime);
+            this.tabLessons.Controls.Add(this.cmbTime);
             this.tabLessons.Controls.Add(this.rbAdminDen);
             this.tabLessons.Controls.Add(this.rbAdminNum);
             this.tabLessons.Controls.Add(this.cmbAdminDay);
-            this.tabLessons.Controls.Add(this.cmbAdminGroup);
+            this.tabLessons.Controls.Add(this.cmbGroupForLesson);
+            this.tabLessons.Controls.Add(this.cmbDirectionForLesson);
+            this.tabLessons.Controls.Add(this.lblSelectGroup);
+            this.tabLessons.Controls.Add(this.lblDirectionForLesson);
             this.tabLessons.Location = new System.Drawing.Point(4, 25);
             this.tabLessons.Name = "tabLessons";
             this.tabLessons.Padding = new System.Windows.Forms.Padding(3);
@@ -181,7 +189,7 @@
             this.tabLessons.Text = "Расписание";
             this.tabLessons.UseVisualStyleBackColor = true;
             // 
-            // txtGroupName
+            // lblStats
             // 
             this.lblStats.AutoSize = true;
             this.lblStats.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
@@ -201,7 +209,7 @@
             this.btnDeleteAllLessonsForGroup.Text = "Удалить все пары группы";
             this.btnDeleteAllLessonsForGroup.UseVisualStyleBackColor = false;
             // 
-            // btnDeleteGroup
+            // btnDeleteLesson
             // 
             this.btnDeleteLesson.Location = new System.Drawing.Point(39, 353);
             this.btnDeleteLesson.Name = "btnDeleteLesson";
@@ -210,7 +218,7 @@
             this.btnDeleteLesson.Text = "Удалить выбранную пару";
             this.btnDeleteLesson.UseVisualStyleBackColor = true;
             // 
-            // cmbAdminGroup
+            // dgvLessons
             // 
             this.dgvLessons.AllowUserToAddRows = false;
             this.dgvLessons.AllowUserToDeleteRows = false;
@@ -233,7 +241,7 @@
             this.dgvLessons.Size = new System.Drawing.Size(1059, 500);
             this.dgvLessons.TabIndex = 16;
             // 
-            // cmbAdminDay
+            // btnAddLesson
             // 
             this.btnAddLesson.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.btnAddLesson.Location = new System.Drawing.Point(39, 275);
@@ -286,15 +294,15 @@
             // rbAdminNum
             // 
             this.rbAdminNum.AutoSize = true;
-            this.rbAdminNum.Location = new System.Drawing.Point(319, 10);
+            this.rbAdminNum.Location = new System.Drawing.Point(22, 70);
             this.rbAdminNum.Name = "rbAdminNum";
             this.rbAdminNum.Size = new System.Drawing.Size(98, 20);
-            this.rbAdminNum.TabIndex = 2;
+            this.rbAdminNum.TabIndex = 9;
             this.rbAdminNum.TabStop = true;
             this.rbAdminNum.Text = "Числитель";
             this.rbAdminNum.UseVisualStyleBackColor = true;
             // 
-            // rbAdminDen
+            // cmbAdminDay
             // 
             this.cmbAdminDay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbAdminDay.FormattingEnabled = true;
@@ -303,7 +311,7 @@
             this.cmbAdminDay.Size = new System.Drawing.Size(150, 24);
             this.cmbAdminDay.TabIndex = 8;
             // 
-            // txtTime
+            // cmbGroupForLesson
             // 
             this.cmbGroupForLesson.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbGroupForLesson.FormattingEnabled = true;
@@ -312,7 +320,7 @@
             this.cmbGroupForLesson.Size = new System.Drawing.Size(192, 24);
             this.cmbGroupForLesson.TabIndex = 7;
             // 
-            // txtSubject
+            // cmbDirectionForLesson
             // 
             this.cmbDirectionForLesson.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbDirectionForLesson.FormattingEnabled = true;
@@ -321,7 +329,7 @@
             this.cmbDirectionForLesson.Size = new System.Drawing.Size(150, 24);
             this.cmbDirectionForLesson.TabIndex = 6;
             // 
-            // txtTeacher
+            // lblSelectGroup
             // 
             this.lblSelectGroup.AutoSize = true;
             this.lblSelectGroup.Location = new System.Drawing.Point(212, 20);
@@ -330,7 +338,7 @@
             this.lblSelectGroup.TabIndex = 5;
             this.lblSelectGroup.Text = "Группа";
             // 
-            // txtRoom
+            // lblDirectionForLesson
             // 
             this.lblDirectionForLesson.AutoSize = true;
             this.lblDirectionForLesson.Location = new System.Drawing.Point(22, 20);
@@ -339,7 +347,7 @@
             this.lblDirectionForLesson.TabIndex = 4;
             this.lblDirectionForLesson.Text = "Направление";
             // 
-            // btnAddLesson
+            // statusStrip
             // 
             this.statusStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -350,20 +358,15 @@
             this.statusStrip.TabIndex = 1;
             this.statusStrip.Text = "statusStrip1";
             // 
-            // dgvLessons
+            // statusLabel
             // 
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(57, 20);
             this.statusLabel.Text = "Готово";
             // 
-            // btnDeleteLesson
+            // errorProvider
             // 
-            this.btnDeleteLesson.Location = new System.Drawing.Point(22, 287);
-            this.btnDeleteLesson.Name = "btnDeleteLesson";
-            this.btnDeleteLesson.Size = new System.Drawing.Size(110, 64);
-            this.btnDeleteLesson.TabIndex = 10;
-            this.btnDeleteLesson.Text = "Удалить выбранную пару";
-            this.btnDeleteLesson.UseVisualStyleBackColor = true;
+            this.errorProvider.ContainerControl = this;
             // 
             // colGroup
             // 
@@ -428,6 +431,7 @@
             this.ClientSize = new System.Drawing.Size(1326, 694);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.tabControl1);
+            this.MinimumSize = new System.Drawing.Size(1098, 697);
             this.Name = "AdminForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Администрирование расписания";
@@ -438,7 +442,11 @@
             this.tabLessons.ResumeLayout(false);
             this.tabLessons.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvLessons)).EndInit();
+            this.statusStrip.ResumeLayout(false);
+            this.statusStrip.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -448,6 +456,11 @@
         private System.Windows.Forms.TabPage tabGroups;
         private System.Windows.Forms.TabPage tabLessons;
         private System.Windows.Forms.Button btnDeleteGroup;
+        private System.Windows.Forms.Button btnCreateGroupFromParts;
+        private System.Windows.Forms.TextBox txtGroupNum;
+        private System.Windows.Forms.Label lblGroupNum;
+        private System.Windows.Forms.TextBox txtDirection;
+        private System.Windows.Forms.Label lblDirection;
         private System.Windows.Forms.ListBox lstGroups;
         private System.Windows.Forms.Label lblStats;
         private System.Windows.Forms.Button btnDeleteAllLessonsForGroup;

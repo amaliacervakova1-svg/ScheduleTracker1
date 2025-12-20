@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Models;
 using Server.Services;
+using System.ComponentModel.DataAnnotations;
+using Server.Models;
 
 namespace Server.Controllers
 {
@@ -19,7 +20,10 @@ namespace Server.Controllers
 
         // GET api/schedule
         [HttpGet]
-        public async Task<IActionResult> GetSchedule(string group, int day, bool numerator)
+        public async Task<IActionResult> GetSchedule(
+            [Required] string group,
+            [Range(0, 6)] int day,
+            bool numerator)
         {
             try
             {
@@ -58,7 +62,7 @@ namespace Server.Controllers
 
         // POST api/schedule
         [HttpPost]
-        public async Task<IActionResult> AddLesson([FromBody] Lesson lesson)
+        public async Task<IActionResult> AddLesson([FromBody] CreateLessonDto lessonDto)
         {
             try
             {

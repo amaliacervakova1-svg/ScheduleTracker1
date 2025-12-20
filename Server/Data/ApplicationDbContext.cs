@@ -9,6 +9,5 @@ namespace Server.Data
 
         public DbSet<Group> Groups { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
-        public DbSet<Admin> Admins { get; set; }
     }
 }

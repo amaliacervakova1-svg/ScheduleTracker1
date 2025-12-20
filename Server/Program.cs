@@ -9,25 +9,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Добавляем логирование
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Подключаем SQLite
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Регистрируем ВСЕ сервисы
+// Регистрируем сервис
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IGroupService, GroupService>();
-builder.Services.AddScoped<ILessonService, LessonService>();
 
 var app = builder.Build();
 
-// Заполняем базу данными
+// ОДНОРАЗОВОЕ заполнение базы данными
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    SeedData.Initialize(db); // ? автоматически создаст группы и расписание
+    SeedData.Initialize(db);
 }
-// ??????????????????????????????????????????????????????????????
 
 if (app.Environment.IsDevelopment())
 {

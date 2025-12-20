@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Server.Data;
 using Server.Models;
 using System;
@@ -11,10 +12,97 @@ namespace Server.Services
     public class ScheduleService : IScheduleService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<ScheduleService> _logger;
 
-        public ScheduleService(ApplicationDbContext context)
+        public ScheduleService(ApplicationDbContext context, ILogger<ScheduleService> logger)
         {
             _context = context;
+            _logger = logger;
+        }
+
+        public async Task<List<Lesson>> GetScheduleAsync(string groupName, DayOfWeek dayOfWeek, bool isNumerator)
+        {
+            try
+            {
+                var group = await _context.Groups.FirstOrDefaultAsync(g => g.Name == groupName);
+                if (group == null)
+                {
+                    _logger.LogWarning($"Группа '{groupName}' не найдена");
+                    return new List<Lesson>();
+                }
+
+                var lessons = await _context.Lessons
+                    .Where(l => l.GroupId == group.Id &&
+                                l.DayOfWeek == dayOfWeek &&
+                                l.IsNumerator == isNumerator)
+                    .OrderBy(l => l.Time)
+                    .ToListAsync();
+
+                _logger.LogInformation($"Найдено {lessons.Count} занятий для группы {groupName}, день {dayOfWeek}, неделя {(isNumerator ? "числитель" : "знаменатель")}");
+                return lessons;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при получении расписания для группы {groupName}");
+                throw;
+            }
+        }
+
+        public async Task<List<Lesson>> GetAllSchedulesAsync()
+        {
+            try
+            {
+                var lessons = await _context.Lessons
+                    .Include(l => l.Group)
+                    .OrderBy(l => l.Group.Name)
+                    .ThenBy(l => l.DayOfWeek)
+                    .ThenBy(l => l.Time)
+                    .ToListAsync();
+
+                _logger.LogInformation($"Загружено {lessons.Count} занятий");
+                return lessons;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при получении всех расписаний");
+                throw;
+            }
+        }
+
+        public async Task<Lesson> AddLessonAsync(Lesson lesson)
+        {
+            try
+            {
+                // Проверяем существование группы
+                var groupExists = await _context.Groups.AnyAsync(g => g.Id == lesson.GroupId);
+                if (!groupExists)
+                {
+                    throw new ArgumentException($"Группа с ID {lesson.GroupId} не найдена");
+                }
+
+                // Проверяем уникальность (группа + день + время + тип недели)
+                var duplicateExists = await _context.Lessons
+                    .AnyAsync(l => l.GroupId == lesson.GroupId &&
+                                   l.DayOfWeek == lesson.DayOfWeek &&
+                                   l.Time == lesson.Time &&
+                                   l.IsNumerator == lesson.IsNumerator);
+
+                if (duplicateExists)
+                {
+                    throw new InvalidOperationException("Занятие с такими параметрами уже существует");
+                }
+
+                _context.Lessons.Add(lesson);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Добавлено занятие ID {lesson.Id} для группы ID {lesson.GroupId}");
+                return lesson;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при добавлении занятия для группы ID {lesson.GroupId}");
+                throw;
+            }
         }
 
         public async Task<bool> DeleteLessonAsync(int id)

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
 using Server.Models;
-using Server.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Server.Controllers
 {
@@ -8,22 +10,22 @@ namespace Server.Controllers
     [Route("api/[controller]")]
     public class GroupsController : ControllerBase
     {
-        private readonly IGroupService _groupService;
+        private readonly ApplicationDbContext _db;
         private readonly ILogger<GroupsController> _logger;
 
-        public GroupsController(IGroupService groupService, ILogger<GroupsController> logger)
+        public GroupsController(ApplicationDbContext db, ILogger<GroupsController> logger)
         {
-            _groupService = groupService;
+            _db = db;
             _logger = logger;
         }
 
-        // GET api/groups
+        // GET api/groups — список всех групп
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                var groups = await _groupService.GetAllGroupsAsync();
+                var groups = await _db.Groups.ToListAsync();
                 _logger.LogInformation($"Получено {groups.Count} групп");
                 return Ok(groups);
             }
@@ -34,30 +36,7 @@ namespace Server.Controllers
             }
         }
 
-        // GET api/groups/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var group = await _groupService.GetGroupByIdAsync(id);
-
-                if (group == null)
-                {
-                    _logger.LogWarning($"Группа ID {id} не найдена");
-                    return NotFound(new { error = "Группа не найдена" });
-                }
-
-                return Ok(group);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Ошибка при получении группы ID {id}");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
-            }
-        }
-
-        // POST api/groups
+        // POST api/groups — добавить группу
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] Group group)
         {
@@ -70,13 +49,17 @@ namespace Server.Controllers
                     return BadRequest(new { error = "Название группы не может быть пустым" });
                 }
 
-                var addedGroup = await _groupService.AddGroupAsync(group);
-                return Ok(addedGroup);
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, $"Конфликт при добавлении группы: {group.Name}");
-                return Conflict(new { error = ex.Message });
+                if (await _db.Groups.AnyAsync(g => g.Name == group.Name))
+                {
+                    _logger.LogWarning($"Попытка добавить существующую группу: {group.Name}");
+                    return BadRequest(new { error = "Группа с таким названием уже существует" });
+                }
+
+                _db.Groups.Add(group);
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation($"Группа добавлена: ID={group.Id}, Name={group.Name}");
+                return Ok(group);
             }
             catch (Exception ex)
             {
@@ -85,7 +68,7 @@ namespace Server.Controllers
             }
         }
 
-        // DELETE api/groups/{id}
+        // DELETE api/groups/{id} — удалить группу
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -93,33 +76,32 @@ namespace Server.Controllers
             {
                 _logger.LogInformation($"Удаление группы ID {id}");
 
-                // Проверяем существование группы
-                var groupExists = await _groupService.GroupExistsAsync(id);
-                if (!groupExists)
+                var group = await _db.Groups.FindAsync(id);
+                if (group == null)
                 {
                     _logger.LogWarning($"Группа ID {id} не найдена");
                     return NotFound(new { error = "Группа не найдена" });
                 }
 
-                // Пытаемся удалить группу
-                var deleted = await _groupService.DeleteGroupAsync(id);
-
-                if (!deleted)
+                // Проверяем, есть ли занятия у группы
+                var hasLessons = await _db.Lessons.AnyAsync(l => l.GroupId == id);
+                if (hasLessons)
                 {
-                    return BadRequest(new { error = "Не удалось удалить группу" });
+                    _logger.LogWarning($"Нельзя удалить группу {group.Name} - есть занятия");
+                    return BadRequest(new { error = "Нельзя удалить группу, у которой есть занятия. Сначала удалите все занятия." });
                 }
 
+                _db.Groups.Remove(group);
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation($"Группа удалена: ID={id}, Name={group.Name}");
                 return Ok(new
                 {
                     success = true,
                     message = "Группа удалена успешно",
-                    groupId = id
+                    groupId = id,
+                    groupName = group.Name
                 });
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, $"Ошибка операции при удалении группы ID {id}");
-                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
@@ -128,20 +110,21 @@ namespace Server.Controllers
             }
         }
 
-        // GET api/groups/{id}/lessons
+        // GET api/groups/{id}/lessons — получить занятия группы
         [HttpGet("{id}/lessons")]
         public async Task<IActionResult> GetGroupLessons(int id)
         {
             try
             {
-                // Проверяем существование группы
-                var group = await _groupService.GetGroupByIdAsync(id);
+                var group = await _db.Groups.FindAsync(id);
                 if (group == null)
                 {
                     return NotFound(new { error = $"Группа с ID {id} не найдена" });
                 }
 
-                var lessons = await _groupService.GetGroupLessonsAsync(id);
+                var lessons = await _db.Lessons
+                    .Where(l => l.GroupId == id)
+                    .ToListAsync();
 
                 _logger.LogInformation($"Получено {lessons.Count} занятий для группы ID {id}");
                 return Ok(new
@@ -155,40 +138,6 @@ namespace Server.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Ошибка при получении занятий группы ID {id}");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
-            }
-        }
-
-        // PUT api/groups/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Group updatedGroup)
-        {
-            try
-            {
-                _logger.LogInformation($"Обновление группы ID {id}");
-
-                if (string.IsNullOrWhiteSpace(updatedGroup.Name))
-                {
-                    return BadRequest(new { error = "Название группы не может быть пустым" });
-                }
-
-                var result = await _groupService.UpdateGroupAsync(id, updatedGroup);
-
-                if (result == null)
-                {
-                    return NotFound(new { error = $"Группа с ID {id} не найдена" });
-                }
-
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, $"Конфликт при обновлении группы ID {id}");
-                return Conflict(new { error = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Ошибка при обновлении группы ID {id}");
                 return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
             }
         }

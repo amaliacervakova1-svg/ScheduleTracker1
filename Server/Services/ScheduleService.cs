@@ -17,41 +17,107 @@ namespace Server.Services
             _context = context;
         }
 
-        public async Task<List<Lesson>> GetScheduleAsync(string groupName, DayOfWeek dayOfWeek, bool isNumerator)
+        public async Task<bool> DeleteLessonAsync(int id)
         {
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.Name == groupName);
-            if (group == null) return new List<Lesson>();
+            try
+            {
+                var lesson = await _context.Lessons.FindAsync(id);
+                if (lesson == null)
+                {
+                    _logger.LogWarning($"Занятие ID {id} не найдено для удаления");
+                    return false;
+                }
 
-            return await _context.Lessons
-                .Where(l => l.GroupId == group.Id &&
-                            l.DayOfWeek == dayOfWeek &&
-                            l.IsNumerator == isNumerator)
-                .OrderBy(l => l.Time)
-                .ToListAsync();
+                _context.Lessons.Remove(lesson);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Удалено занятие ID {id}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при удалении занятия ID {id}");
+                throw;
+            }
         }
 
-        public async Task<List<Lesson>> GetAllSchedulesAsync()
+        public async Task<int> DeleteAllLessonsForGroupAsync(int groupId)
         {
-            return await _context.Lessons.Include(l => l.Group).ToListAsync();
+            try
+            {
+                // Проверяем существование группы
+                var groupExists = await _context.Groups.AnyAsync(g => g.Id == groupId);
+                if (!groupExists)
+                {
+                    throw new ArgumentException($"Группа с ID {groupId} не найдена");
+                }
+
+                var groupLessons = await _context.Lessons
+                    .Where(l => l.GroupId == groupId)
+                    .ToListAsync();
+
+                if (!groupLessons.Any())
+                {
+                    _logger.LogInformation($"Для группы ID {groupId} нет занятий для удаления");
+                    return 0;
+                }
+
+                _context.Lessons.RemoveRange(groupLessons);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Удалено {groupLessons.Count} занятий для группы ID {groupId}");
+                return groupLessons.Count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при удалении занятий для группы ID {groupId}");
+                throw;
+            }
         }
 
-        public async Task AddLessonAsync(Lesson lesson)
+        public async Task<Lesson?> GetLessonByIdAsync(int id)
         {
-            var group = await _context.Groups.FindAsync(lesson.GroupId);
-            if (group == null)
-                throw new Exception("Группа не найдена");
-
-            _context.Lessons.Add(lesson);
-            await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.Lessons
+                    .Include(l => l.Group)
+                    .FirstOrDefaultAsync(l => l.Id == id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при получении занятия ID {id}");
+                throw;
+            }
         }
 
-        public async Task DeleteLessonAsync(int id)
+        public async Task<Lesson?> UpdateLessonAsync(int id, Lesson updatedLesson)
         {
-            var lesson = await _context.Lessons.FindAsync(id);
-            if (lesson == null) return;
+            try
+            {
+                var existingLesson = await _context.Lessons.FindAsync(id);
+                if (existingLesson == null)
+                {
+                    return null;
+                }
 
-            _context.Lessons.Remove(lesson);
-            await _context.SaveChangesAsync();
+                // Обновляем поля
+                existingLesson.DayOfWeek = updatedLesson.DayOfWeek;
+                existingLesson.IsNumerator = updatedLesson.IsNumerator;
+                existingLesson.Time = updatedLesson.Time;
+                existingLesson.Subject = updatedLesson.Subject;
+                existingLesson.Teacher = updatedLesson.Teacher;
+                existingLesson.Room = updatedLesson.Room;
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Обновлено занятие ID {id}");
+
+                return existingLesson;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при обновлении занятия ID {id}");
+                throw;
+            }
         }
     }
 }

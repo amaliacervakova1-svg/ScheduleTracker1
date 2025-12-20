@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 namespace ScheduleClient
 {
+    //
     public partial class Form1 : Form
     {
         // УБРАЛИ общий HttpClient

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Models;
 using Server.Services;
 using System.ComponentModel.DataAnnotations;
+using Server.Models;
 
 namespace Server.Controllers
 {
@@ -9,16 +9,16 @@ namespace Server.Controllers
     [Route("api/[controller]")]
     public class ScheduleController : ControllerBase
     {
-        private readonly IScheduleService _service;
+        private readonly ILessonService _lessonService;
         private readonly ILogger<ScheduleController> _logger;
 
-        public ScheduleController(IScheduleService service, ILogger<ScheduleController> logger)
+        public ScheduleController(ILessonService lessonService, ILogger<ScheduleController> logger)
         {
-            _service = service;
+            _lessonService = lessonService;
             _logger = logger;
         }
 
-        // Посмотреть расписание группы на день
+        // GET api/schedule
         [HttpGet]
         public async Task<IActionResult> GetSchedule(
             [Required] string group,
@@ -30,37 +30,37 @@ namespace Server.Controllers
                 _logger.LogInformation($"Запрос расписания: группа={group}, день={day}, числитель={numerator}");
 
                 if (!Enum.IsDefined(typeof(DayOfWeek), day))
-                    return BadRequest(new { error = "Неверный день недели (0-6, где 0 = Воскресенье, 1 = Понедельник и т.д.)" });
+                {
+                    return BadRequest(new { error = "Неверный день недели (0-6)" });
+                }
 
-                var schedule = await _service.GetScheduleAsync(group, (DayOfWeek)day, numerator);
-
-                // Возвращаем чистый список без обертки
-                return Ok(schedule);
+                var lessons = await _lessonService.GetLessonsAsync(group, (DayOfWeek)day, numerator);
+                return Ok(lessons);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Ошибка при получении расписания для группы {group}");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
             }
         }
 
-        // Посмотреть всё расписание
+        // GET api/schedule/all
         [HttpGet("all")]
         public async Task<IActionResult> GetAllSchedules()
         {
             try
             {
-                var all = await _service.GetAllSchedulesAsync();
+                var all = await _lessonService.GetAllLessonsAsync();
                 return Ok(all);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка при получении всех расписаний");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
             }
         }
 
-        // Добавить пару
+        // POST api/schedule
         [HttpPost]
         public async Task<IActionResult> AddLesson([FromBody] CreateLessonDto lessonDto)
         {
@@ -73,39 +73,27 @@ namespace Server.Controllers
                     return BadRequest(ModelState);
                 }
 
-                // Создаем Lesson из DTO
-                var lesson = new Lesson
-                {
-                    GroupId = lessonDto.GroupId,
-                    DayOfWeek = (DayOfWeek)lessonDto.DayOfWeek,
-                    IsNumerator = lessonDto.IsNumerator,
-                    Time = lessonDto.Time,
-                    Subject = lessonDto.Subject,
-                    Teacher = lessonDto.Teacher,
-                    Room = lessonDto.Room
-                };
-
-                var addedLesson = await _service.AddLessonAsync(lesson);
+                var addedLesson = await _lessonService.CreateLessonAsync(lessonDto);
                 return Ok(addedLesson);
             }
             catch (ArgumentException ex)
             {
-                _logger.LogWarning(ex, $"Ошибка аргумента при добавлении занятия: {ex.Message}");
+                _logger.LogWarning(ex, $"Ошибка аргумента: {ex.Message}");
                 return BadRequest(new { error = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning(ex, $"Ошибка операции при добавлении занятия: {ex.Message}");
+                _logger.LogWarning(ex, $"Конфликт: {ex.Message}");
                 return Conflict(new { error = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка при добавлении занятия для группы ID {lessonDto.GroupId}");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+                _logger.LogError(ex, $"Ошибка при добавлении занятия");
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
             }
         }
 
-        // Удалить пару
+        // DELETE api/schedule/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLesson(int id)
         {
@@ -113,21 +101,23 @@ namespace Server.Controllers
             {
                 _logger.LogInformation($"Удаление занятия ID {id}");
 
-                var deleted = await _service.DeleteLessonAsync(id);
+                var deleted = await _lessonService.DeleteLessonAsync(id);
 
                 if (!deleted)
+                {
                     return NotFound(new { error = $"Занятие с ID {id} не найдено" });
+                }
 
                 return Ok(new { success = true, message = "Занятие успешно удалено", id = id });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Ошибка при удалении занятия ID {id}");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
             }
         }
 
-        // Удалить все занятия группы
+        // DELETE api/schedule/group/{groupId}
         [HttpDelete("group/{groupId}")]
         public async Task<IActionResult> DeleteAllLessonsForGroup(int groupId)
         {
@@ -135,7 +125,7 @@ namespace Server.Controllers
             {
                 _logger.LogInformation($"Удаление всех занятий для группы ID {groupId}");
 
-                var count = await _service.DeleteAllLessonsForGroupAsync(groupId);
+                var count = await _lessonService.DeleteLessonsByGroupIdAsync(groupId);
 
                 return Ok(new
                 {
@@ -143,15 +133,68 @@ namespace Server.Controllers
                     count = count
                 });
             }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning(ex, $"Ошибка аргумента при удалении занятий группы: {ex.Message}");
-                return BadRequest(new { error = ex.Message });
-            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Ошибка при удалении занятий для группы ID {groupId}");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
+            }
+        }
+
+        // PUT api/schedule/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateLesson(int id, [FromBody] UpdateLessonDto lessonDto)
+        {
+            try
+            {
+                _logger.LogInformation($"Обновление занятия ID {id}");
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var updatedLesson = await _lessonService.UpdateLessonAsync(id, lessonDto);
+
+                if (updatedLesson == null)
+                {
+                    return NotFound(new { error = $"Занятие с ID {id} не найдено" });
+                }
+
+                return Ok(updatedLesson);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, $"Конфликт: {ex.Message}");
+                return Conflict(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при обновлении занятия ID {id}");
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
+            }
+        }
+
+        // GET api/schedule/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetLessonById(int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Получение занятия ID {id}");
+
+                var lesson = await _lessonService.GetLessonByIdAsync(id);
+
+                if (lesson == null)
+                {
+                    return NotFound(new { error = $"Занятие с ID {id} не найдено" });
+                }
+
+                return Ok(lesson);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Ошибка при получении занятия ID {id}");
+                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
             }
         }
     }

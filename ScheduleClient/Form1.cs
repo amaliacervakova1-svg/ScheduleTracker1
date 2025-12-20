@@ -12,7 +12,9 @@ namespace ScheduleClient
 {
     public partial class Form1 : Form
     {
-        private readonly HttpClient http = new HttpClient();
+        // УБРАЛИ общий HttpClient
+        // private readonly HttpClient http = new HttpClient();
+
         private List<Group> allGroups = new List<Group>();
         private bool isLoading = false;
         private Label statusLabel;
@@ -22,6 +24,8 @@ namespace ScheduleClient
         public Form1()
         {
             InitializeComponent();
+
+            // УБРАЛИ настройку HttpClient
             CreateStatusLabel();
             SetupToolTips();
             BindEventHandlers();
@@ -67,10 +71,12 @@ namespace ScheduleClient
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            Text = "Расписание занятий - Студенческий портал";
+            Text = "Расписание занятий";
 
             try
             {
+                await Task.Delay(3000);
+
                 isLoading = true;
                 SetControlsEnabled(false);
                 statusLabel.Text = "Загрузка данных...";
@@ -78,9 +84,8 @@ namespace ScheduleClient
                 await LoadGroupsAsync();
 
                 // Заполняем дни недели
-                string[] days = { "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье" };
                 cmbDay.Items.Clear();
-                cmbDay.Items.AddRange(days);
+                cmbDay.Items.AddRange(AppConfig.GetDaysOfWeek());
 
                 // Устанавливаем сегодняшний день
                 int todayIndex = (int)DateTime.Today.DayOfWeek;
@@ -118,46 +123,60 @@ namespace ScheduleClient
             btnAdmin.Enabled = enabled;
         }
 
+        // Вспомогательный метод для создания HttpClient
+        private HttpClient CreateHttpClient()
+        {
+            var http = new HttpClient();
+            http.Timeout = TimeSpan.FromSeconds(15);
+            http.DefaultRequestHeaders.Accept.Clear();
+            http.DefaultRequestHeaders.Accept.Add(
+                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            return http;
+        }
+
         private async Task LoadGroupsAsync()
         {
             try
             {
                 statusLabel.Text = "Загрузка групп...";
-                http.Timeout = TimeSpan.FromSeconds(10);
 
-                var response = await http.GetAsync($"{BaseUrl}/api/groups");
-
-                if (response.IsSuccessStatusCode)
+                // ВСЕГДА создаем новый HttpClient для каждого запроса
+                using (var http = CreateHttpClient())
                 {
-                    allGroups = await response.Content.ReadFromJsonAsync<List<Group>>() ?? new List<Group>();
+                    var response = await http.GetAsync($"{BaseUrl}/api/groups");
 
-                    // Получаем уникальные направления
-                    var directions = allGroups
-                        .Select(g =>
-                        {
-                            var parts = g.Name.Split('-');
-                            return parts.Length > 0 ? parts[0].Trim().ToUpper() : g.Name;
-                        })
-                        .Distinct()
-                        .OrderBy(x => x)
-                        .ToList();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        allGroups = await response.Content.ReadFromJsonAsync<List<Group>>() ?? new List<Group>();
 
-                    cmbDirection.Items.Clear();
-                    cmbDirection.Items.Add("Все направления");
-                    foreach (var d in directions)
-                        cmbDirection.Items.Add(d);
+                        // Получаем уникальные направления
+                        var directions = allGroups
+                            .Select(g =>
+                            {
+                                var parts = g.Name.Split('-');
+                                return parts.Length > 0 ? parts[0].Trim().ToUpper() : g.Name;
+                            })
+                            .Distinct()
+                            .OrderBy(x => x)
+                            .ToList();
 
-                    if (cmbDirection.Items.Count > 0)
-                        cmbDirection.SelectedIndex = 0;
+                        cmbDirection.Items.Clear();
+                        cmbDirection.Items.Add("Все направления");
+                        foreach (var d in directions)
+                            cmbDirection.Items.Add(d);
 
-                    statusLabel.Text = $"Загружено {allGroups.Count} групп";
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Ошибка загрузки групп: {error}", "Ошибка",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    statusLabel.Text = "Ошибка загрузки групп";
+                        if (cmbDirection.Items.Count > 0)
+                            cmbDirection.SelectedIndex = 0;
+
+                        statusLabel.Text = $"Загружено {allGroups.Count} групп";
+                    }
+                    else
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка загрузки групп: {error}", "Ошибка",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        statusLabel.Text = "Ошибка загрузки групп";
+                    }
                 }
             }
             catch (HttpRequestException ex)
@@ -174,12 +193,85 @@ namespace ScheduleClient
             }
         }
 
+        private List<string> GetUniqueDirections()
+        {
+            if (allGroups == null || allGroups.Count == 0)
+                return new List<string>();
+
+            // Извлекаем направления из названий групп (формат: "НАПР-НОМЕР")
+            var directions = allGroups
+                .Select(g =>
+                {
+                    var parts = g.Name.Split('-');
+                    return parts.Length > 0 ? parts[0].Trim().ToUpper() : g.Name;
+                })
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            Console.WriteLine($"Найдено направлений: {directions.Count} - {string.Join(", ", directions)}");
+            return directions;
+        }
+
         private void UpdateGroupsList()
         {
             if (isLoading) return;
 
             string selectedDir = cmbDirection.SelectedItem?.ToString() ?? "";
 
+            // СОХРАНЯЕМ выбранное направление ДО обновления
+            string previouslySelectedDirection = selectedDir;
+
+            // Очищаем combobox направлений
+            cmbDirection.Items.Clear();
+
+            if (allGroups == null || allGroups.Count == 0)
+            {
+                cmbDirection.Items.Add("Все направления");
+                cmbDirection.SelectedIndex = 0;
+
+                cmbGroup.Items.Clear();
+                cmbGroup.Items.Add("Группы не загружены");
+                cmbGroup.SelectedIndex = 0;
+                return;
+            }
+
+            // Получаем актуальные направления
+            var directions = GetUniqueDirections();
+
+            // Заполняем направления
+            cmbDirection.Items.Add("Все направления");
+            foreach (var d in directions)
+                cmbDirection.Items.Add(d);
+
+            // Пытаемся восстановить выбранное направление
+            if (!string.IsNullOrEmpty(previouslySelectedDirection))
+            {
+                // Ищем ранее выбранное направление в новом списке
+                int index = cmbDirection.FindStringExact(previouslySelectedDirection);
+                if (index >= 0)
+                {
+                    cmbDirection.SelectedIndex = index;
+                }
+                else
+                {
+                    // Если направление больше не существует, выбираем "Все направления"
+                    cmbDirection.SelectedIndex = 0;
+                }
+            }
+            else
+            {
+                // Если ничего не было выбрано, выбираем первый элемент
+                if (cmbDirection.Items.Count > 0)
+                    cmbDirection.SelectedIndex = 0;
+            }
+
+            // Теперь обновляем список групп на основе выбранного направления
+            UpdateGroupsComboBox();
+        }
+
+        private void UpdateGroupsComboBox()
+        {
             cmbGroup.Items.Clear();
 
             if (allGroups == null || allGroups.Count == 0)
@@ -189,6 +281,8 @@ namespace ScheduleClient
                 return;
             }
 
+            string selectedDir = cmbDirection.SelectedItem?.ToString() ?? "";
+
             var filtered = string.IsNullOrEmpty(selectedDir) || selectedDir == "Все направления"
                 ? allGroups
                 : allGroups.Where(g => g.Name.StartsWith(selectedDir, StringComparison.OrdinalIgnoreCase));
@@ -197,7 +291,9 @@ namespace ScheduleClient
                 cmbGroup.Items.Add(g.Name);
 
             if (cmbGroup.Items.Count > 0)
+            {
                 cmbGroup.SelectedIndex = 0;
+            }
             else
             {
                 cmbGroup.Items.Add("Группы не найдены");
@@ -205,14 +301,55 @@ namespace ScheduleClient
             }
         }
 
+        private async void UpdateGroupsListAfterAdmin()
+        {
+            try
+            {
+                Console.WriteLine("Обновление списка групп после администрирования...");
+
+                isLoading = true;
+                SetControlsEnabled(false);
+                statusLabel.Text = "Обновление данных...";
+
+                // Загружаем обновленный список групп
+                await LoadGroupsAsync(); // Теперь использует новый HttpClient каждый раз
+
+                // Полностью обновляем выпадающие списки
+                UpdateGroupsList();
+
+                // Обновляем расписание, если нужно
+                if (cmbGroup.SelectedItem != null &&
+                    cmbGroup.SelectedItem.ToString() != "Группы не загружены" &&
+                    cmbGroup.SelectedItem.ToString() != "Группы не найдены")
+                {
+                    await LoadScheduleAsync();
+                }
+
+                statusLabel.Text = $"Данные обновлены. Групп: {allGroups.Count}";
+                Console.WriteLine("Список групп и направлений успешно обновлен");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обновлении данных: {ex.Message}");
+                statusLabel.Text = "Ошибка обновления";
+            }
+            finally
+            {
+                isLoading = false;
+                SetControlsEnabled(true);
+            }
+        }
+
         private async void CmbDirection_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (isLoading) return;
 
-            UpdateGroupsList();
+            UpdateGroupsComboBox();
 
             // Если есть выбранная группа, загружаем расписание
-            if (cmbGroup.SelectedItem != null)
+            if (cmbGroup.SelectedItem != null &&
+                cmbGroup.SelectedItem.ToString() != "Группы не загружены" &&
+                cmbGroup.SelectedItem.ToString() != "Группы не найдены")
             {
                 await LoadScheduleAsync();
             }
@@ -296,34 +433,38 @@ namespace ScheduleClient
                 string url = $"{BaseUrl}/api/schedule?group={Uri.EscapeDataString(groupName)}&day={dayOfWeekValue}&numerator={isNumerator}";
                 Console.WriteLine($"Запрос к: {url}");
 
-                var response = await http.GetAsync(url);
-                Console.WriteLine($"Статус ответа: {response.StatusCode}");
-
-                if (response.IsSuccessStatusCode)
+                // ВСЕГДА создаем новый HttpClient для каждого запроса
+                using (var http = CreateHttpClient())
                 {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ответ сервера: {responseString.Substring(0, Math.Min(responseString.Length, 200))}...");
+                    var response = await http.GetAsync(url);
+                    Console.WriteLine($"Статус ответа: {response.StatusCode}");
 
-                    try
+                    if (response.IsSuccessStatusCode)
                     {
-                        var lessons = await response.Content.ReadFromJsonAsync<List<Lesson>>();
-                        Console.WriteLine($"Успешно десериализовано {lessons?.Count ?? 0} занятий");
-                        DisplaySchedule(groupName, dayIndex, isNumerator, lessons);
-                        statusLabel.Text = "Расписание загружено";
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Ответ сервера: {responseString.Substring(0, Math.Min(responseString.Length, 200))}...");
+
+                        try
+                        {
+                            var lessons = await response.Content.ReadFromJsonAsync<List<Lesson>>();
+                            Console.WriteLine($"Успешно десериализовано {lessons?.Count ?? 0} занятий");
+                            DisplaySchedule(groupName, dayIndex, isNumerator, lessons);
+                            statusLabel.Text = "Расписание загружено";
+                        }
+                        catch (JsonException ex)
+                        {
+                            Console.WriteLine($"Ошибка десериализации JSON: {ex.Message}");
+                            ShowErrorInListBox($"Ошибка формата данных: {ex.Message}\n\nОтвет сервера:\n{responseString}");
+                            statusLabel.Text = "Ошибка формата данных";
+                        }
                     }
-                    catch (JsonException ex)
+                    else
                     {
-                        Console.WriteLine($"Ошибка десериализации JSON: {ex.Message}");
-                        ShowErrorInListBox($"Ошибка формата данных: {ex.Message}\n\nОтвет сервера:\n{responseString}");
-                        statusLabel.Text = "Ошибка формата данных";
+                        var error = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Ошибка сервера: {error}");
+                        ShowErrorInListBox($"Ошибка сервера ({(int)response.StatusCode}): {error}");
+                        statusLabel.Text = "Ошибка загрузки";
                     }
-                }
-                else
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Ошибка сервера: {error}");
-                    ShowErrorInListBox($"Ошибка сервера ({(int)response.StatusCode}): {error}");
-                    statusLabel.Text = "Ошибка загрузки";
                 }
             }
             catch (HttpRequestException ex)
@@ -461,6 +602,7 @@ namespace ScheduleClient
                     {
                         var adminForm = new AdminForm();
                         adminForm.ShowDialog();
+                        UpdateGroupsListAfterAdmin();
                     }
                     else
                     {
@@ -472,14 +614,43 @@ namespace ScheduleClient
         }
     }
 
-    // Класс формы для ввода пароля (оставляем как было)
+    // Класс формы для ввода пароля
     public class PasswordForm : Form
     {
+        private TextBox txtUsername;
         private TextBox txtPassword;
         private Button btnOk;
         private Button btnCancel;
         public bool PasswordCorrect { get; private set; } = false;
-        private const string CorrectPassword = "12345";
+
+        // УБРАЛИ общий HttpClient
+        // private readonly HttpClient http = new HttpClient();
+
+        // DTO классы для сериализации/десериализации
+        private class LoginRequest
+        {
+            public string Username { get; set; }
+            public string Password { get; set; }
+
+            public LoginRequest()
+            {
+                Username = string.Empty;
+                Password = string.Empty;
+            }
+        }
+
+        private class AuthResponse
+        {
+            public bool Success { get; set; }
+            public string Message { get; set; }
+            public string Token { get; set; }
+
+            public AuthResponse()
+            {
+                Message = string.Empty;
+                Token = string.Empty;
+            }
+        }
 
         public PasswordForm()
         {
@@ -493,45 +664,82 @@ namespace ScheduleClient
             this.StartPosition = FormStartPosition.CenterParent;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Size = new Size(350, 180);
+            this.Size = new Size(350, 220);
             this.BackColor = SystemColors.Control;
 
             var lblTitle = new Label
             {
-                Text = "Введите пароль администратора",
+                Text = "Вход для администратора",
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 Location = new Point(20, 20),
                 Size = new Size(300, 25)
             };
 
+            var lblUsername = new Label
+            {
+                Text = "Имя пользователя:",
+                Location = new Point(20, 50),
+                Size = new Size(120, 20)
+            };
+
+            txtUsername = new TextBox
+            {
+                Location = new Point(140, 50),
+                Size = new Size(170, 25),
+                Font = new Font("Segoe UI", 10),
+                Text = "admin"
+            };
+
+            var lblPassword = new Label
+            {
+                Text = "Пароль:",
+                Location = new Point(20, 85),
+                Size = new Size(120, 20)
+            };
+
             txtPassword = new TextBox
             {
-                Location = new Point(20, 60),
-                Size = new Size(290, 25),
+                Location = new Point(140, 85),
+                Size = new Size(170, 25),
                 PasswordChar = '*',
                 Font = new Font("Segoe UI", 10)
             };
 
             btnOk = new Button
             {
-                Text = "ОК",
-                Location = new Point(150, 100),
+                Text = "Войти",
+                Location = new Point(150, 140),
                 Size = new Size(80, 30),
-                DialogResult = DialogResult.OK
             };
 
             btnCancel = new Button
             {
                 Text = "Отмена",
-                Location = new Point(240, 100),
+                Location = new Point(240, 140),
                 Size = new Size(80, 30),
                 DialogResult = DialogResult.Cancel
             };
 
-            btnOk.Click += BtnOk_Click;
-            txtPassword.KeyPress += TxtPassword_KeyPress;
+            btnOk.Click += async (sender, e) => await BtnOk_Click(sender, e);
+
+            // Обработка нажатия Enter в поле пароля
+            txtPassword.KeyPress += async (sender, e) =>
+            {
+                if (e.KeyChar == (char)Keys.Enter)
+                {
+                    await BtnOk_Click(sender, e);
+                    if (PasswordCorrect)
+                    {
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                }
+            };
 
             this.Controls.Add(lblTitle);
+            this.Controls.Add(lblUsername);
+            this.Controls.Add(txtUsername);
+            this.Controls.Add(lblPassword);
             this.Controls.Add(txtPassword);
             this.Controls.Add(btnOk);
             this.Controls.Add(btnCancel);
@@ -539,18 +747,106 @@ namespace ScheduleClient
             this.CancelButton = btnCancel;
         }
 
-        private void BtnOk_Click(object sender, EventArgs e)
-        {
-            PasswordCorrect = (txtPassword.Text == CorrectPassword);
-        }
 
-        private void TxtPassword_KeyPress(object sender, KeyPressEventArgs e)
+        private async Task BtnOk_Click(object sender, EventArgs e)
         {
-            if (e.KeyChar == (char)Keys.Enter)
+            string username = txtUsername.Text.Trim();
+            string password = txtPassword.Text;
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                BtnOk_Click(sender, e);
-                if (PasswordCorrect)
-                    this.DialogResult = DialogResult.OK;
+                MessageBox.Show("Введите имя пользователя и пароль", "Внимание",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                // Блокируем кнопку во время проверки
+                btnOk.Enabled = false;
+                btnOk.Text = "Проверка...";
+
+                // ВСЕГДА создаем новый HttpClient для каждого запроса
+                using (var http = new HttpClient())
+                {
+                    http.Timeout = TimeSpan.FromSeconds(10);
+                    http.DefaultRequestHeaders.Accept.Clear();
+                    http.DefaultRequestHeaders.Accept.Add(
+                        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                    string baseUrl = "http://localhost:5032";
+
+                    // Создаем объект для отправки
+                    var loginData = new LoginRequest
+                    {
+                        Username = username,
+                        Password = password
+                    };
+
+                    Console.WriteLine($"Попытка входа: {username}");
+                    Console.WriteLine($"Отправка запроса на: {baseUrl}/api/auth/login");
+
+                    // Отправляем запрос на сервер для проверки пароля
+                    var response = await http.PostAsJsonAsync($"{baseUrl}/api/auth/login", loginData);
+
+                    Console.WriteLine($"Ответ сервера: {response.StatusCode}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Ответ: {responseContent}");
+
+                        var authResponse = System.Text.Json.JsonSerializer.Deserialize<AuthResponse>(responseContent,
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                        PasswordCorrect = authResponse?.Success ?? false;
+
+                        if (PasswordCorrect)
+                        {
+                            Console.WriteLine("✅ Аутентификация успешна");
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show(authResponse?.Message ?? "Неверные учетные данные",
+                                "Ошибка входа", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            Console.WriteLine($"❌ Ошибка аутентификации: {authResponse?.Message}");
+                        }
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Ошибка сервера: {errorContent}");
+
+                        MessageBox.Show($"Ошибка сервера: {(int)response.StatusCode}\n{errorContent}",
+                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"❌ Ошибка подключения: {ex.Message}");
+                MessageBox.Show($"Не удалось подключиться к серверу:\n{ex.Message}",
+                    "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                Console.WriteLine($"❌ Ошибка JSON: {ex.Message}");
+                MessageBox.Show($"Ошибка при обработке ответа сервера:\n{ex.Message}",
+                    "Ошибка данных", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Неожиданная ошибка: {ex.Message}");
+                MessageBox.Show($"Непредвиденная ошибка:\n{ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // Восстанавливаем кнопку
+                btnOk.Enabled = true;
+                btnOk.Text = "Войти";
             }
         }
     }
